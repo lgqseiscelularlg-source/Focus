@@ -1,0 +1,41 @@
+<!DOCTYPE html>
+<html lang="es">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>RealityTour AR</title>
+    <link rel="stylesheet" href="style.css" />
+
+    <!-- Librerías de A-Frame y AR.js -->
+    <script src="https://aframe.io/releases/1.2.0/aframe.min.js"></script>
+    <script src="https://rawcdn.githack.com/jeromeetienne/AR.js/1.7.5/aframe/build/aframe-ar.js"></script>
+  </head>
+
+  <body>
+    <div id="desktop-warning" class="hidden">
+      <p>Para una mejor experiencia, abre esta página desde un dispositivo móvil.</p>
+      <button onclick="document.getElementById('desktop-warning').style.display='none'">
+        Continuar igualmente
+      </button>
+    </div>
+
+    <a-scene
+      embedded
+      vr-mode-ui="false"
+      arjs="sourceType: webcam; trackingMethod: best; debugUIEnabled: false;"
+    >
+      <!-- Cubo 3D geolocalizado -->
+      <a-box
+        id="geoBox"
+        gps-entity-place="latitude: -29.477051; longitude: -66.889616"
+        color="red"
+        scale="2 2 2"
+        visible="false"
+      ></a-box>
+
+      <a-camera gps-camera rotation-reader></a-camera>
+    </a-scene>
+
+    <script src="script.js"></script>
+  </body>
+</html>
