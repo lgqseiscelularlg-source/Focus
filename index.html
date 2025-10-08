@@ -11,62 +11,34 @@
     <script src="https://rawcdn.githack.com/jeromeetienne/AR.js/1.7.5/aframe/build/aframe-ar.js"></script>
   </head>
 
-  <body>
-    <div id="desktop-warning" class="hidden">
-      <p>Para una mejor experiencia, abre esta página desde un dispositivo móvil.</p>
-      <button onclick="document.getElementById('desktop-warning').style.display='none'">
-        Continuar igualmente
-      </button>
-    </div>
+<body style="margin: 0; padding: 0; overflow: hidden">
+  <div id="permission-screen" style="display: flex; flex-direction: column; justify-content: center; align-items: center; height: 100vh; background: #000; color: white; text-align: center;">
+    <h2>Permitir acceso a ubicación</h2>
+    <p>Necesitamos tu ubicación para mostrar contenido de realidad aumentada.</p>
+    <button id="start-btn" style="padding: 10px 20px; margin-top: 20px; background: #ff4a4a; color: white; border: none; border-radius: 5px; font-size: 16px;">
+      Permitir y continuar
+    </button>
+  </div>
 
-        <script>
-    navigator.geolocation.getCurrentPosition(
-      (pos) => {
-        alert("Latitud: " + pos.coords.latitude + " | Longitud: " + pos.coords.longitude);
-      },
-      (err) => {
-        alert("Error al obtener ubicación: " + err.message);
-      },
-      { enableHighAccuracy: true, timeout: 15000 }
-    );
-    </script>
-
-
+  <div id="ar-container" style="display: none">
     <a-scene
       embedded
       vr-mode-ui="false"
       arjs="sourceType: webcam; trackingMethod: best; debugUIEnabled: false;"
     >
-      <!-- Cubo geolocalizado (solo para obtener su posición) -->
       <a-box
         id="geoBox"
         gps-entity-place="latitude: -29.477051; longitude: -66.889616"
         position="0 2 0"
         color="red"
-        scale="3 3 3"
+        scale="2 2 2"
         visible="false"
       ></a-box>
-    
-      <!-- Cubo fijo (sin GPS), lo mostraremos cuando “congelemos” la posición -->
-      <a-box
-        id="fixedBox"
-        position="0 2 -2"
-        color="red"
-        scale="3 3 3"
-        visible="false"
-      ></a-box>
-    
       <a-camera gps-camera rotation-reader></a-camera>
     </a-scene>
+  </div>
 
+  <script src="script.js"></script>
+</body>
 
-    <script src="script.js"></script>
-    <script>
-  window.addEventListener("gps-camera-update-position", (e) => {
-    console.log("GPS actualizado:", e.detail.position);
-    alert("GPS detectado: " + JSON.stringify(e.detail.position));
-  });
-</script>
-
-  </body>
 </html>
