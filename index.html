@@ -79,90 +79,117 @@
     </a-scene>
 
     <script>
-      const startBtn = document.getElementById("start-btn");
-const permissionScreen = document.getElementById("permission-screen");
-const geoBox = document.getElementById("geoBox");
-const distLabel = document.getElementById("distance-label");
+  const startBtn = document.getElementById("start-btn");
+  const permissionScreen = document.getElementById("permission-screen");
+  const geoBox = document.getElementById("geoBox");
+  const distLabel = document.getElementById("distance-label");
 
-const objetivo = { lat: -29.477051, lon: -66.889616 };
-const radio = 5;
+  // Coordenadas del objetivo
+  const objetivo = { lat: -29.477051, lon: -66.889616 };
+  const radio = 5; // metros
 
-let objetoAnclado = false; // 🔹 indica si ya se fijó en el espacio
+  let coordenadasProm = [];
+  let baseFijada = false;
 
-function distanciaMetros(lat1, lon1, lat2, lon2) {
-  const R = 6371e3;
+  // Convierte grados a radianes
   const toRad = (deg) => (deg * Math.PI) / 180;
-  const dLat = toRad(lat2 - lat1);
-  const dLon = toRad(lon2 - lon1);
-  const a =
-    Math.sin(dLat / 2) ** 2 +
-    Math.cos(toRad(lat1)) *
-      Math.cos(toRad(lat2)) *
-      Math.sin(dLon / 2) ** 2;
-  const c = 2 * Math.atan2(Math.sqrt(a), Math.sqrt(1 - a));
-  return R * c;
-}
 
-startBtn.addEventListener("click", async () => {
-  try {
-    if (DeviceOrientationEvent && DeviceOrientationEvent.requestPermission) {
-      try {
-        await DeviceOrientationEvent.requestPermission();
-      } catch (e) {
-        console.warn("Orientación no concedida", e);
-      }
-    }
-
-    navigator.geolocation.getCurrentPosition(
-      (pos) => {
-        console.log("Ubicación inicial:", pos.coords);
-        permissionScreen.style.display = "none";
-        distLabel.style.display = "block";
-        iniciarAR();
-      },
-      (err) => {
-        alert("Error de ubicación: " + err.message);
-      },
-      { enableHighAccuracy: true, timeout: 15000 }
-    );
-  } catch (err) {
-    alert("Error general: " + err.message);
+  // Distancia Haversine en metros
+  function distanciaMetros(lat1, lon1, lat2, lon2) {
+    const R = 6371e3;
+    const dLat = toRad(lat2 - lat1);
+    const dLon = toRad(lon2 - lon1);
+    const a =
+      Math.sin(dLat / 2) ** 2 +
+      Math.cos(toRad(lat1)) * Math.cos(toRad(lat2)) * Math.sin(dLon / 2) ** 2;
+    return R * 2 * Math.atan2(Math.sqrt(a), Math.sqrt(1 - a));
   }
-});
 
-function iniciarAR() {
-  navigator.geolocation.watchPosition(
-    (pos) => {
-      const lat = pos.coords.latitude;
-      const lon = pos.coords.longitude;
-      const dist = distanciaMetros(lat, lon, objetivo.lat, objetivo.lon);
-      distLabel.textContent = `Distancia: ${dist.toFixed(2)} m`;
+  // Promedio de lecturas GPS
+  function promedioCoordenadas(coords) {
+    const sumLat = coords.reduce((a, c) => a + c.lat, 0);
+    const sumLon = coords.reduce((a, c) => a + c.lon, 0);
+    return {
+      lat: sumLat / coords.length,
+      lon: sumLon / coords.length,
+    };
+  }
 
-      if (dist <= radio) {
-        if (!objetoAnclado) {
-          // 🔹 mostrar el cubo y anclarlo
-          geoBox.setAttribute("visible", "true");
-
-          // esperamos un poco a que AR.js asigne su posición interna
-          setTimeout(() => {
-            const pos = geoBox.object3D.position.clone();
-            geoBox.removeAttribute("gps-entity-place");
-            geoBox.setAttribute("position", `${pos.x} ${pos.y} ${pos.z}`);
-            console.log("📍Objeto anclado en posición:", pos);
-            objetoAnclado = true;
-          }, 2000);
-        }
-      } else {
-        if (!objetoAnclado) {
-          geoBox.setAttribute("visible", "false");
-        }
+  // Botón de inicio
+  startBtn.addEventListener("click", async () => {
+    try {
+      if (window.DeviceOrientationEvent && DeviceOrientationEvent.requestPermission) {
+        try {
+          await DeviceOrientationEvent.requestPermission();
+        } catch {}
       }
-    },
-    (err) => console.error("Error GPS:", err),
-    { enableHighAccuracy: true, maximumAge: 0, timeout: 20000 }
-  );
-}
+      navigator.geolocation.getCurrentPosition(
+        () => {
+          permissionScreen.style.display = "none";
+          distLabel.style.display = "block";
+          iniciarAR();
+        },
+        (err) => alert("Error al obtener ubicación: " + err.message),
+        { enableHighAccuracy: true, timeout: 15000 }
+      );
+    } catch (err) {
+      alert("Error general: " + err.message);
+    }
+  });
 
-    </script>
+  // Lógica principal AR
+  function iniciarAR() {
+    navigator.geolocation.watchPosition(
+      (pos) => {
+        const lat = pos.coords.latitude;
+        const lon = pos.coords.longitude;
+
+        // Fase 1: recolección inicial de coordenadas
+        if (!baseFijada) {
+          coordenadasProm.push({ lat, lon });
+
+          if (coordenadasProm.length === 5) {
+            const base = promedioCoordenadas(coordenadasProm);
+            baseFijada = true;
+            console.log("📍 Base promedio fijada:", base);
+
+            // Distancia inicial al objetivo
+            const dist = distanciaMetros(base.lat, base.lon, objetivo.lat, objetivo.lon);
+            distLabel.textContent = `Distancia inicial: ${dist.toFixed(2)} m`;
+
+            if (dist <= radio) {
+              mostrarObjetoFijo(base);
+            } else {
+              console.log("Fuera del radio inicial, objeto oculto");
+            }
+          }
+        } else {
+          // Una vez fijada la base, solo actualizamos distancia visual
+          const dist = distanciaMetros(lat, lon, objetivo.lat, objetivo.lon);
+          distLabel.textContent = `Distancia: ${dist.toFixed(2)} m`;
+        }
+      },
+      (err) => console.error("Error GPS:", err),
+      { enableHighAccuracy: true, maximumAge: 0, timeout: 20000 }
+    );
+  }
+
+  // Fija el cubo en base a la posición promedio
+  function mostrarObjetoFijo(base) {
+    const dLat = objetivo.lat - base.lat;
+    const dLon = objetivo.lon - base.lon;
+
+    // Convertimos diferencia a metros aprox
+    const latMeters = dLat * 111320;
+    const lonMeters = dLon * (111320 * Math.cos(toRad(base.lat)));
+
+    // Mostramos el cubo 2 m sobre el suelo
+    geoBox.setAttribute("position", `${lonMeters} 2 ${-latMeters}`);
+    geoBox.setAttribute("visible", "true");
+
+    console.log("✅ Objeto anclado en posición fija");
+  }
+</script>
+
   </body>
 </html>
