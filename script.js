@@ -3,40 +3,63 @@ if (!/Mobi|Android/i.test(navigator.userAgent)) {
   document.getElementById("desktop-warning").classList.remove("hidden");
 }
 
-// Variables de control
+// Coordenadas del punto objetivo (tu ubicación de prueba)
+const objetivo = { lat: -29.477051, lon: -66.889616 };
 const radio = 2; // metros
-const target = { lat: -29.477051, lon: -66.889616 };
-const objeto = document.getElementById("geoBox");
 
-// Observa la ubicación del usuario
+// Estado para saber si el cubo ya fue fijado
+let cuboFijado = false;
+
 navigator.geolocation.watchPosition(
-  (pos) => {
-    const lat = pos.coords.latitude;
-    const lon = pos.coords.longitude;
+  function (position) {
+    const userLat = position.coords.latitude;
+    const userLon = position.coords.longitude;
+    const geoBox = document.getElementById("geoBox");
 
-    const distancia = calcularDistancia(lat, lon, target.lat, target.lon);
+    const distancia = calcularDistancia(userLat, userLon, objetivo.lat, objetivo.lon);
 
-    console.log("Distancia actual: " + distancia.toFixed(2) + " m");
-
+    // Si está dentro del radio
     if (distancia <= radio) {
-      objeto.setAttribute("visible", "true");
+      geoBox.setAttribute("visible", "true");
+
+      // Si aún no fue fijado, lo fijamos en su posición actual
+      if (!cuboFijado) {
+        const posicionActual = geoBox.getAttribute("position");
+        geoBox.removeAttribute("gps-entity-place"); // Desvincula el GPS
+        geoBox.setAttribute("position", posicionActual); // Mantiene su posición actual
+        cuboFijado = true;
+        console.log("Cubo fijado en posición:", posicionActual);
+      }
     } else {
-      objeto.setAttribute("visible", "false");
+      geoBox.setAttribute("visible", "false");
+      cuboFijado = false;
+      // Volvemos a vincular el GPS si vuelve a entrar en el radio
+      geoBox.setAttribute(
+        "gps-entity-place",
+        `latitude: ${objetivo.lat}; longitude: ${objetivo.lon}`
+      );
     }
   },
-  (err) => console.error(err),
-  { enableHighAccuracy: true }
+  function (error) {
+    console.error("Error de geolocalización:", error);
+  },
+  {
+    enableHighAccuracy: true,
+    maximumAge: 0,
+    timeout: 27000,
+  }
 );
 
-// Fórmula de Haversine
+// Función para calcular distancia (Haversine)
 function calcularDistancia(lat1, lon1, lat2, lon2) {
-  const R = 6371e3; // metros
-  const φ1 = (lat1 * Math.PI) / 180;
-  const φ2 = (lat2 * Math.PI) / 180;
-  const Δφ = ((lat2 - lat1) * Math.PI) / 180;
-  const Δλ = ((lon2 - lon1) * Math.PI) / 180;
+  const R = 6371e3;
+  const toRad = (deg) => (deg * Math.PI) / 180;
+  const dLat = toRad(lat2 - lat1);
+  const dLon = toRad(lon2 - lon1);
   const a =
-    Math.sin(Δφ / 2) ** 2 +
-    Math.cos(φ1) * Math.cos(φ2) * Math.sin(Δλ / 2) ** 2;
-  return R * 2 * Math.atan2(Math.sqrt(a), Math.sqrt(1 - a));
+    Math.sin(dLat / 2) ** 2 +
+    Math.cos(toRad(lat1)) * Math.cos(toRad(lat2)) * Math.sin(dLon / 2) ** 2;
+  const c = 2 * Math.atan2(Math.sqrt(a), Math.sqrt(1 - a));
+  return R * c;
 }
+
