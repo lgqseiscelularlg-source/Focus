@@ -5,7 +5,7 @@ if (!/Mobi|Android/i.test(navigator.userAgent)) {
 
 // Coordenadas del punto objetivo (tu ubicación de prueba)
 const objetivo = { lat: -29.477051, lon: -66.889616 };
-const radio = 2; // metros
+const radio = 10; // metros
 
 // Estado para saber si el cubo ya fue fijado
 let cuboFijado = false;
