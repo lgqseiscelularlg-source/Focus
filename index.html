@@ -12,33 +12,57 @@
   </head>
 
 <body style="margin: 0; padding: 0; overflow: hidden">
-  <div id="permission-screen" style="display: flex; flex-direction: column; justify-content: center; align-items: center; height: 100vh; background: #000; color: white; text-align: center;">
+  <!-- Pantalla de permiso sobrepuesta -->
+  <div id="permission-overlay" style="
+    position: fixed;
+    top: 0;
+    left: 0;
+    width: 100%;
+    height: 100%;
+    background: rgba(0,0,0,0.9);
+    color: white;
+    display: flex;
+    flex-direction: column;
+    justify-content: center;
+    align-items: center;
+    z-index: 9999;
+    text-align: center;
+  ">
     <h2>Permitir acceso a ubicación</h2>
     <p>Necesitamos tu ubicación para mostrar contenido de realidad aumentada.</p>
-    <button id="start-btn" style="padding: 10px 20px; margin-top: 20px; background: #ff4a4a; color: white; border: none; border-radius: 5px; font-size: 16px;">
+    <button id="start-btn" style="
+      padding: 12px 24px;
+      margin-top: 20px;
+      background: #ff4a4a;
+      color: white;
+      border: none;
+      border-radius: 6px;
+      font-size: 16px;
+    ">
       Permitir y continuar
     </button>
   </div>
 
-  <div id="ar-container" style="display: none">
-    <a-scene
-      embedded
-      vr-mode-ui="false"
-      arjs="sourceType: webcam; trackingMethod: best; debugUIEnabled: false;"
-    >
-      <a-box
-        id="geoBox"
-        gps-entity-place="latitude: -29.477051; longitude: -66.889616"
-        position="0 2 0"
-        color="red"
-        scale="2 2 2"
-        visible="false"
-      ></a-box>
-      <a-camera gps-camera rotation-reader></a-camera>
-    </a-scene>
-  </div>
+  <!-- Escena AR (siempre cargada) -->
+  <a-scene
+    embedded
+    vr-mode-ui="false"
+    arjs="sourceType: webcam; trackingMethod: best; debugUIEnabled: false;"
+  >
+    <a-box
+      id="geoBox"
+      gps-entity-place="latitude: -29.477051; longitude: -66.889616"
+      position="0 2 0"
+      color="red"
+      scale="2 2 2"
+      visible="false"
+    ></a-box>
+
+    <a-camera gps-camera rotation-reader></a-camera>
+  </a-scene>
 
   <script src="script.js"></script>
 </body>
+
 
 </html>
