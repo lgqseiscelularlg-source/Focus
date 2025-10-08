@@ -4,7 +4,7 @@ if (!/Mobi|Android/i.test(navigator.userAgent)) {
 }
 
 // Variables de control
-const radio = 10; // metros
+const radio = 2; // metros
 const target = { lat: -29.477051, lon: -66.889616 };
 const objeto = document.getElementById("geoBox");
 
