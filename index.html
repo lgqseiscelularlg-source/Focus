@@ -183,9 +183,13 @@
     const latMeters = dLat * 111320;
     const lonMeters = dLon * (111320 * Math.cos(toRad(base.lat)));
 
-    // Mostramos el cubo 2 m sobre el suelo
-    geoBox.setAttribute("position", `${lonMeters} 2 ${-latMeters}`);
+    // Aumentamos la altura y dejamos visible forzado para test
+    const altura = 3; // metros sobre el suelo
+    geoBox.setAttribute("position", `${lonMeters.toFixed(2)} ${altura} ${-latMeters.toFixed(2)}`);
     geoBox.setAttribute("visible", "true");
+    geoBox.setAttribute("scale", "3 3 3"); // más grande para test
+    console.log("✅ Objeto anclado en posición fija:", lonMeters, latMeters);
+
 
     console.log("✅ Objeto anclado en posición fija");
   }
