@@ -64,56 +64,61 @@
     <div id="distance-label" style="display:none;">Distancia: -- m</div>
 
     <a-scene
-      vr-mode-ui="false"
-      embedded
-      arjs="sourceType: gps; debugUIEnabled: false;"
-    >
-      <a-camera gps-camera rotation-reader></a-camera>
-    </a-scene>
-    
-    <script>
-      window.addEventListener("gps-camera-update-position", (e) => {
-        console.log("📍 Coordenadas recibidas:", e.detail.position);
-        const dist = distanciaMetros(
-          e.detail.position.latitude,
-          e.detail.position.longitude,
-          -29.477051,
-          -66.889616
-        );
-    
-        document.getElementById("distance-label").textContent =
-          `Distancia: ${dist.toFixed(2)} m`;
-    
-        if (dist <= 5 && !document.querySelector("#geoBox")) {
+  vr-mode-ui="false"
+  embedded
+  renderer="logarithmicDepthBuffer: true;"
+  arjs="sourceType: webcam; videoTexture: true; trackingMethod: best; debugUIEnabled: false;"
+>
+  <a-camera gps-camera rotation-reader></a-camera>
+</a-scene>
+
+<script>
+  const objetivo = { lat: -29.477051, lon: -66.889616 };
+  const radio = 5;
+  const distLabel = document.getElementById("distance-label");
+  let boxCreado = false;
+
+  // Esperamos a que AR.js inicialice la cámara
+  window.addEventListener("arjs-video-loaded", () => {
+    console.log("✅ Cámara lista, iniciando seguimiento GPS...");
+    navigator.geolocation.watchPosition(
+      (pos) => {
+        const { latitude, longitude } = pos.coords;
+        const distancia = distanciaMetros(latitude, longitude, objetivo.lat, objetivo.lon);
+        distLabel.textContent = `Distancia: ${distancia.toFixed(2)} m`;
+
+        if (distancia <= radio && !boxCreado) {
           console.log("🧱 Dentro del radio — creando cubo...");
           const scene = document.querySelector("a-scene");
           const box = document.createElement("a-box");
-          box.setAttribute("id", "geoBox");
-          box.setAttribute(
-            "gps-entity-place",
-            "latitude: -29.477051; longitude: -66.889616"
-          );
+          box.setAttribute("gps-entity-place", `latitude: ${objetivo.lat}; longitude: ${objetivo.lon}`);
           box.setAttribute("color", "red");
           box.setAttribute("scale", "3 3 3");
           box.setAttribute("position", "0 2 0");
           scene.appendChild(box);
+          boxCreado = true;
         }
-      });
-    
-      function toRad(deg) {
-        return (deg * Math.PI) / 180;
-      }
-    
-      function distanciaMetros(lat1, lon1, lat2, lon2) {
-        const R = 6371e3;
-        const dLat = toRad(lat2 - lat1);
-        const dLon = toRad(lon2 - lon1);
-        const a =
-          Math.sin(dLat / 2) ** 2 +
-          Math.cos(toRad(lat1)) * Math.cos(toRad(lat2)) * Math.sin(dLon / 2) ** 2;
-        return R * 2 * Math.atan2(Math.sqrt(a), Math.sqrt(1 - a));
-      }
-    </script>
+      },
+      (err) => {
+        console.error("Error de geolocalización:", err);
+        alert("No se pudo obtener la ubicación. Verifica los permisos de GPS.");
+      },
+      { enableHighAccuracy: true, maximumAge: 0, timeout: 15000 }
+    );
+  });
+
+  // Utilidades
+  const toRad = (deg) => (deg * Math.PI) / 180;
+  function distanciaMetros(lat1, lon1, lat2, lon2) {
+    const R = 6371e3;
+    const dLat = toRad(lat2 - lat1);
+    const dLon = toRad(lon2 - lon1);
+    const a =
+      Math.sin(dLat / 2) ** 2 +
+      Math.cos(toRad(lat1)) * Math.cos(toRad(lat2)) * Math.sin(dLon / 2) ** 2;
+    return R * 2 * Math.atan2(Math.sqrt(a), Math.sqrt(1 - a));
+  }
+</script>
 
 
     <script>
