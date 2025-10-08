@@ -25,13 +25,15 @@
       arjs="sourceType: webcam; trackingMethod: best; debugUIEnabled: false;"
     >
       <!-- Cubo 3D geolocalizado -->
-      <a-box
-        id="geoBox"
-        gps-entity-place="latitude: -29.477051; longitude: -66.889616"
-        color="red"
-        scale="2 2 2"
-        visible="false"
-      ></a-box>
+    <a-box
+      id="geoBox"
+      gps-entity-place="latitude: -29.477051; longitude: -66.889616"
+      position="0 2 0"
+      color="red"
+      scale="2 2 2"
+      visible="false"
+    ></a-box>
+
 
       <a-camera gps-camera rotation-reader></a-camera>
     </a-scene>
