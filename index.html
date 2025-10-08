@@ -19,6 +19,19 @@
       </button>
     </div>
 
+        <script>
+    navigator.geolocation.getCurrentPosition(
+      (pos) => {
+        alert("Latitud: " + pos.coords.latitude + " | Longitud: " + pos.coords.longitude);
+      },
+      (err) => {
+        alert("Error al obtener ubicación: " + err.message);
+      },
+      { enableHighAccuracy: true, timeout: 15000 }
+    );
+    </script>
+
+
     <a-scene
       embedded
       vr-mode-ui="false"
@@ -30,7 +43,7 @@
         gps-entity-place="latitude: -29.477051; longitude: -66.889616"
         position="0 2 0"
         color="red"
-        scale="2 2 2"
+        scale="3 3 3"
         visible="false"
       ></a-box>
     
@@ -39,7 +52,7 @@
         id="fixedBox"
         position="0 2 -2"
         color="red"
-        scale="2 2 2"
+        scale="3 3 3"
         visible="false"
       ></a-box>
     
@@ -48,5 +61,12 @@
 
 
     <script src="script.js"></script>
+    <script>
+  window.addEventListener("gps-camera-update-position", (e) => {
+    console.log("GPS actualizado:", e.detail.position);
+    alert("GPS detectado: " + JSON.stringify(e.detail.position));
+  });
+</script>
+
   </body>
 </html>
