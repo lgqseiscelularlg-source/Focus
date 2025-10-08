@@ -1,6 +1,6 @@
 // --- Configuración --- //
 const objetivo = { lat: -29.477051, lon: -66.889616 };
-const radio = 2; // metros (para tus pruebas)
+const radio = 10; // metros (para tus pruebas)
 const geoBox = document.getElementById("geoBox");
 const fixedBox = document.getElementById("fixedBox");
 
