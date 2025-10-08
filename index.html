@@ -80,76 +80,89 @@
 
     <script>
       const startBtn = document.getElementById("start-btn");
-      const permissionScreen = document.getElementById("permission-screen");
-      const geoBox = document.getElementById("geoBox");
-      const distLabel = document.getElementById("distance-label");
+const permissionScreen = document.getElementById("permission-screen");
+const geoBox = document.getElementById("geoBox");
+const distLabel = document.getElementById("distance-label");
 
-      const objetivo = { lat: -29.477051, lon: -66.889616 };
-      const radio = 5;
+const objetivo = { lat: -29.477051, lon: -66.889616 };
+const radio = 5;
 
-      // Distancia usando fórmula Haversine
-      function distanciaMetros(lat1, lon1, lat2, lon2) {
-        const R = 6371e3;
-        const toRad = (deg) => (deg * Math.PI) / 180;
-        const dLat = toRad(lat2 - lat1);
-        const dLon = toRad(lon2 - lon1);
-        const a =
-          Math.sin(dLat / 2) ** 2 +
-          Math.cos(toRad(lat1)) *
-            Math.cos(toRad(lat2)) *
-            Math.sin(dLon / 2) ** 2;
-        const c = 2 * Math.atan2(Math.sqrt(a), Math.sqrt(1 - a));
-        return R * c;
+let objetoAnclado = false; // 🔹 indica si ya se fijó en el espacio
+
+function distanciaMetros(lat1, lon1, lat2, lon2) {
+  const R = 6371e3;
+  const toRad = (deg) => (deg * Math.PI) / 180;
+  const dLat = toRad(lat2 - lat1);
+  const dLon = toRad(lon2 - lon1);
+  const a =
+    Math.sin(dLat / 2) ** 2 +
+    Math.cos(toRad(lat1)) *
+      Math.cos(toRad(lat2)) *
+      Math.sin(dLon / 2) ** 2;
+  const c = 2 * Math.atan2(Math.sqrt(a), Math.sqrt(1 - a));
+  return R * c;
+}
+
+startBtn.addEventListener("click", async () => {
+  try {
+    if (DeviceOrientationEvent && DeviceOrientationEvent.requestPermission) {
+      try {
+        await DeviceOrientationEvent.requestPermission();
+      } catch (e) {
+        console.warn("Orientación no concedida", e);
       }
+    }
 
-      startBtn.addEventListener("click", async () => {
-        try {
-          // 🔹 Pedir orientación primero
-          if (DeviceOrientationEvent && DeviceOrientationEvent.requestPermission) {
-            try {
-              await DeviceOrientationEvent.requestPermission();
-              console.log("Orientación concedida");
-            } catch (e) {
-              console.warn("Orientación no concedida", e);
-            }
-          }
+    navigator.geolocation.getCurrentPosition(
+      (pos) => {
+        console.log("Ubicación inicial:", pos.coords);
+        permissionScreen.style.display = "none";
+        distLabel.style.display = "block";
+        iniciarAR();
+      },
+      (err) => {
+        alert("Error de ubicación: " + err.message);
+      },
+      { enableHighAccuracy: true, timeout: 15000 }
+    );
+  } catch (err) {
+    alert("Error general: " + err.message);
+  }
+});
 
-          // 🔹 Pedir ubicación
-          navigator.geolocation.getCurrentPosition(
-            (pos) => {
-              console.log("Ubicación inicial:", pos.coords);
-              permissionScreen.style.display = "none";
-              distLabel.style.display = "block";
-              iniciarAR();
-            },
-            (err) => {
-              alert("Error de ubicación: " + err.message);
-            },
-            { enableHighAccuracy: true, timeout: 15000 }
-          );
-        } catch (err) {
-          alert("Error general: " + err.message);
+function iniciarAR() {
+  navigator.geolocation.watchPosition(
+    (pos) => {
+      const lat = pos.coords.latitude;
+      const lon = pos.coords.longitude;
+      const dist = distanciaMetros(lat, lon, objetivo.lat, objetivo.lon);
+      distLabel.textContent = `Distancia: ${dist.toFixed(2)} m`;
+
+      if (dist <= radio) {
+        if (!objetoAnclado) {
+          // 🔹 mostrar el cubo y anclarlo
+          geoBox.setAttribute("visible", "true");
+
+          // esperamos un poco a que AR.js asigne su posición interna
+          setTimeout(() => {
+            const pos = geoBox.object3D.position.clone();
+            geoBox.removeAttribute("gps-entity-place");
+            geoBox.setAttribute("position", `${pos.x} ${pos.y} ${pos.z}`);
+            console.log("📍Objeto anclado en posición:", pos);
+            objetoAnclado = true;
+          }, 2000);
         }
-      });
-
-      function iniciarAR() {
-        navigator.geolocation.watchPosition(
-          (pos) => {
-            const lat = pos.coords.latitude;
-            const lon = pos.coords.longitude;
-            const dist = distanciaMetros(lat, lon, objetivo.lat, objetivo.lon);
-            distLabel.textContent = `Distancia: ${dist.toFixed(2)} m`;
-
-            if (dist <= radio) {
-              geoBox.setAttribute("visible", "true");
-            } else {
-              geoBox.setAttribute("visible", "false");
-            }
-          },
-          (err) => console.error("Error GPS:", err),
-          { enableHighAccuracy: true, maximumAge: 0, timeout: 20000 }
-        );
+      } else {
+        if (!objetoAnclado) {
+          geoBox.setAttribute("visible", "false");
+        }
       }
+    },
+    (err) => console.error("Error GPS:", err),
+    { enableHighAccuracy: true, maximumAge: 0, timeout: 20000 }
+  );
+}
+
     </script>
   </body>
 </html>
