@@ -4,65 +4,152 @@
     <meta charset="UTF-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
     <title>RealityTour AR</title>
-    <link rel="stylesheet" href="style.css" />
 
-    <!-- Librerías de A-Frame y AR.js -->
+    <!-- Librerías -->
     <script src="https://aframe.io/releases/1.2.0/aframe.min.js"></script>
-    <script src="https://rawcdn.githack.com/jeromeetienne/AR.js/1.7.5/aframe/build/aframe-ar.js"></script>
+    <script src="https://cdn.jsdelivr.net/gh/jeromeetienne/AR.js@1.7.5/aframe/build/aframe-ar.js"></script>
+
+    <style>
+      body {
+        margin: 0;
+        overflow: hidden;
+        background: black;
+        color: white;
+      }
+      #permission-screen {
+        position: fixed;
+        top: 0;
+        left: 0;
+        width: 100vw;
+        height: 100vh;
+        display: flex;
+        flex-direction: column;
+        justify-content: center;
+        align-items: center;
+        background: rgba(0, 0, 0, 0.95);
+        z-index: 9999;
+        text-align: center;
+      }
+      #permission-screen button {
+        margin-top: 15px;
+        padding: 10px 20px;
+        border: none;
+        border-radius: 6px;
+        background: #ff4444;
+        color: white;
+        font-size: 16px;
+      }
+      #distance-label {
+        position: fixed;
+        bottom: 20px;
+        left: 50%;
+        transform: translateX(-50%);
+        background: rgba(0, 0, 0, 0.7);
+        color: white;
+        padding: 6px 12px;
+        border-radius: 4px;
+        font-size: 14px;
+        z-index: 10000;
+      }
+    </style>
   </head>
 
-<body style="margin: 0; padding: 0; overflow: hidden">
-  <!-- Pantalla de permiso sobrepuesta -->
-  <div id="permission-overlay" style="
-    position: fixed;
-    top: 0;
-    left: 0;
-    width: 100%;
-    height: 100%;
-    background: rgba(0,0,0,0.9);
-    color: white;
-    display: flex;
-    flex-direction: column;
-    justify-content: center;
-    align-items: center;
-    z-index: 9999;
-    text-align: center;
-  ">
-    <h2>Permitir acceso a ubicación</h2>
-    <p>Necesitamos tu ubicación para mostrar contenido de realidad aumentada.</p>
-    <button id="start-btn" style="
-      padding: 12px 24px;
-      margin-top: 20px;
-      background: #ff4a4a;
-      color: white;
-      border: none;
-      border-radius: 6px;
-      font-size: 16px;
-    ">
-      Permitir y continuar
-    </button>
-  </div>
+  <body>
+    <div id="permission-screen">
+      <h2>Permitir acceso</h2>
+      <p>Necesitamos cámara, ubicación y orientación para mostrar la RA.</p>
+      <button id="start-btn">Permitir y continuar</button>
+    </div>
 
-  <!-- Escena AR (siempre cargada) -->
-  <a-scene
-    embedded
-    vr-mode-ui="false"
-    arjs="sourceType: webcam; trackingMethod: best; debugUIEnabled: false;"
-  >
-    <a-box
-      id="geoBox"
-      gps-entity-place="latitude: -29.477051; longitude: -66.889616"
-      position="0 2 0"
-      color="red"
-      scale="2 2 2"
-      visible="false"
-    ></a-box>
+    <div id="distance-label" style="display:none;">Distancia: -- m</div>
 
-    <a-camera gps-camera rotation-reader></a-camera>
-  </a-scene>
+    <a-scene
+      embedded
+      vr-mode-ui="false"
+      arjs="sourceType: webcam; trackingMethod: best; debugUIEnabled: false;"
+    >
+      <a-box
+        id="geoBox"
+        gps-entity-place="latitude: -29.477051; longitude: -66.889616"
+        color="red"
+        scale="2 2 2"
+        visible="false"
+      ></a-box>
+      <a-camera gps-camera rotation-reader></a-camera>
+    </a-scene>
 
-  <script src="script.js"></script>
-</body>
+    <script>
+      const startBtn = document.getElementById("start-btn");
+      const permissionScreen = document.getElementById("permission-screen");
+      const geoBox = document.getElementById("geoBox");
+      const distLabel = document.getElementById("distance-label");
 
+      const objetivo = { lat: -29.477051, lon: -66.889616 };
+      const radio = 5;
 
+      // Distancia usando fórmula Haversine
+      function distanciaMetros(lat1, lon1, lat2, lon2) {
+        const R = 6371e3;
+        const toRad = (deg) => (deg * Math.PI) / 180;
+        const dLat = toRad(lat2 - lat1);
+        const dLon = toRad(lon2 - lon1);
+        const a =
+          Math.sin(dLat / 2) ** 2 +
+          Math.cos(toRad(lat1)) *
+            Math.cos(toRad(lat2)) *
+            Math.sin(dLon / 2) ** 2;
+        const c = 2 * Math.atan2(Math.sqrt(a), Math.sqrt(1 - a));
+        return R * c;
+      }
+
+      startBtn.addEventListener("click", async () => {
+        try {
+          // 🔹 Pedir orientación primero
+          if (DeviceOrientationEvent && DeviceOrientationEvent.requestPermission) {
+            try {
+              await DeviceOrientationEvent.requestPermission();
+              console.log("Orientación concedida");
+            } catch (e) {
+              console.warn("Orientación no concedida", e);
+            }
+          }
+
+          // 🔹 Pedir ubicación
+          navigator.geolocation.getCurrentPosition(
+            (pos) => {
+              console.log("Ubicación inicial:", pos.coords);
+              permissionScreen.style.display = "none";
+              distLabel.style.display = "block";
+              iniciarAR();
+            },
+            (err) => {
+              alert("Error de ubicación: " + err.message);
+            },
+            { enableHighAccuracy: true, timeout: 15000 }
+          );
+        } catch (err) {
+          alert("Error general: " + err.message);
+        }
+      });
+
+      function iniciarAR() {
+        navigator.geolocation.watchPosition(
+          (pos) => {
+            const lat = pos.coords.latitude;
+            const lon = pos.coords.longitude;
+            const dist = distanciaMetros(lat, lon, objetivo.lat, objetivo.lon);
+            distLabel.textContent = `Distancia: ${dist.toFixed(2)} m`;
+
+            if (dist <= radio) {
+              geoBox.setAttribute("visible", "true");
+            } else {
+              geoBox.setAttribute("visible", "false");
+            }
+          },
+          (err) => console.error("Error GPS:", err),
+          { enableHighAccuracy: true, maximumAge: 0, timeout: 20000 }
+        );
+      }
+    </script>
+  </body>
 </html>
