@@ -4,12 +4,16 @@ if (!/Mobi|Android/i.test(navigator.userAgent)) {
 }
 
 // Variables de control
-const radio = 10; // metros
+const radio = 5; // metros
 const target = { lat: -29.477051, lon: -66.889616 };
 const objeto = document.getElementById("geoBox");
 
 // Observa la ubicación del usuario
 navigator.geolocation.watchPosition(
+  
+  document.getElementById("distancia-display").innerText =
+  "Distancia: " + distancia.toFixed(1) + " m";
+
   (pos) => {
     const lat = pos.coords.latitude;
     const lon = pos.coords.longitude;
@@ -20,9 +24,15 @@ navigator.geolocation.watchPosition(
 
     if (distancia <= radio) {
       objeto.setAttribute("visible", "true");
+    
+      // Mostramos el objeto a 3 m delante del usuario y 2 m de altura
+      objeto.removeAttribute("gps-entity-place"); // Desactiva seguimiento GPS
+      objeto.setAttribute("position", "0 2 -3");  // X=0, Y=2m, Z=-3m (3 metros al frente)
     } else {
       objeto.setAttribute("visible", "false");
+      objeto.setAttribute("gps-entity-place", `latitude: ${target.lat}; longitude: ${target.lon}`);
     }
+
   },
   (err) => console.error(err),
   { enableHighAccuracy: true }
