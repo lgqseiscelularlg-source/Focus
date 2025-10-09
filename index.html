@@ -3,77 +3,47 @@
   <head>
     <meta charset="UTF-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-    <title>RealityTour AR - Final</title>
+    <title>RealityTour AR - Corrección de altura</title>
 
     <!-- Librerías -->
     <script src="https://aframe.io/releases/1.2.0/aframe.min.js"></script>
-    <script src="https://cdn.jsdelivr.net/gh/jeromeetienne/AR.js@3.3.2/aframe/build/aframe-ar.js"></script>
+    <script src="https://cdn.jsdelivr.net/gh/jeromeetienne/AR.js@1.7.5/aframe/build/aframe-ar.js"></script>
 
     <style>
       body { margin: 0; overflow: hidden; background: black; color: white; }
-      #permission-screen {
-        position: fixed;
-        top: 0; left: 0;
-        width: 100vw; height: 100vh;
-        background: rgba(0,0,0,0.95);
-        display: flex;
-        flex-direction: column;
-        justify-content: center;
-        align-items: center;
-        text-align: center;
-        z-index: 9999;
-      }
-      #permission-screen button {
-        background: #ff4444;
-        color: white;
-        border: none;
-        border-radius: 6px;
-        padding: 10px 20px;
-        margin-top: 12px;
-        font-size: 16px;
-      }
       #distance-label {
         position: fixed;
         bottom: 20px;
         left: 50%;
         transform: translateX(-50%);
         background: rgba(0, 0, 0, 0.7);
-        padding: 8px 14px;
-        border-radius: 5px;
+        color: white;
+        padding: 6px 12px;
+        border-radius: 4px;
         font-size: 14px;
-        z-index: 10000;
+        z-index: 10;
       }
     </style>
   </head>
 
   <body>
-    <!-- Pantalla inicial de permisos -->
-    <div id="permission-screen">
-      <h2>Permitir acceso</h2>
-      <p>Necesitamos cámara, ubicación y orientación para mostrar la RA.</p>
-      <button id="start-btn">Permitir y continuar</button>
-    </div>
+    <div id="distance-label">Distancia: -- m</div>
 
-    <!-- Distancia -->
-    <div id="distance-label" style="display:none;">Distancia: -- m</div>
-
-    <!-- Escena AR (se activa después del permiso) -->
     <a-scene
-      id="arScene"
       vr-mode-ui="false"
       embedded
       renderer="logarithmicDepthBuffer: true;"
-      arjs="sourceType: webcam; videoTexture: true; debugUIEnabled: false;"
-      style="display:none;"
+      arjs="sourceType: webcam; videoTexture: true; trackingMethod: best; debugUIEnabled: false;"
     >
       <a-camera gps-camera rotation-reader></a-camera>
 
+      <!-- Cubo geolocalizado -->
       <a-box
         id="geoBox"
         gps-entity-place="latitude: -29.477051; longitude: -66.889616"
         color="red"
         scale="3 3 3"
-        position="0 2 0"
+        position="0 3 0"
         visible="false"
       ></a-box>
     </a-scene>
@@ -83,10 +53,8 @@
       const radio = 5;
       const distLbl = document.getElementById("distance-label");
       const geoBox = document.getElementById("geoBox");
-      const scene = document.getElementById("arScene");
-      const overlay = document.getElementById("permission-screen");
-      const startBtn = document.getElementById("start-btn");
 
+      // Función auxiliar
       const toRad = (deg) => (deg * Math.PI) / 180;
       function distanciaMetros(lat1, lon1, lat2, lon2) {
         const R = 6371e3;
@@ -100,50 +68,29 @@
         return R * 2 * Math.atan2(Math.sqrt(a), Math.sqrt(1 - a));
       }
 
-      startBtn.addEventListener("click", async () => {
-        try {
-          // 🔹 Forzar permisos de orientación (iOS)
-          if (window.DeviceOrientationEvent?.requestPermission) {
-            await DeviceOrientationEvent.requestPermission();
+      // Seguimiento en tiempo real
+      navigator.geolocation.watchPosition(
+        (pos) => {
+          const { latitude, longitude } = pos.coords;
+          const dist = distanciaMetros(latitude, longitude, objetivo.lat, objetivo.lon);
+          distLbl.textContent = `Distancia: ${dist.toFixed(2)} m`;
+
+          if (dist <= radio) {
+            geoBox.setAttribute("visible", "true");
+
+            // ✅ Corrección clave: anclar orientación absoluta al suelo
+            geoBox.object3D.position.set(0, 2, -5); // Aparece 2m sobre el suelo y 5m frente a la cámara
+            geoBox.object3D.rotation.set(0, 0, 0); // Evita rotación "pegada"
+          } else {
+            geoBox.setAttribute("visible", "false");
           }
-
-          // 🔹 Solicitar ubicación ANTES de mostrar la escena
-          navigator.geolocation.getCurrentPosition(
-            (pos) => {
-              console.log("✅ Permisos de ubicación concedidos");
-              overlay.style.display = "none";
-              scene.style.display = "block";
-              distLbl.style.display = "block";
-              iniciarSeguimiento();
-            },
-            (err) => {
-              alert("Error al obtener ubicación: " + err.message);
-            },
-            { enableHighAccuracy: true, timeout: 15000 }
-          );
-        } catch (e) {
-          alert("Error general: " + e.message);
-        }
-      });
-
-      function iniciarSeguimiento() {
-        navigator.geolocation.watchPosition(
-          (pos) => {
-            const { latitude, longitude } = pos.coords;
-            const dist = distanciaMetros(latitude, longitude, objetivo.lat, objetivo.lon);
-            distLbl.textContent = `Distancia: ${dist.toFixed(2)} m`;
-
-            if (dist <= radio) {
-              geoBox.setAttribute("visible", "true");
-            } else {
-              geoBox.setAttribute("visible", "false");
-            }
-          },
-          (err) => console.error("Error en seguimiento:", err),
-          { enableHighAccuracy: true, maximumAge: 0, timeout: 20000 }
-        );
-      }
+        },
+        (err) => {
+          console.error("Error de geolocalización:", err);
+          alert("Error al obtener ubicación: " + err.message);
+        },
+        { enableHighAccuracy: true, maximumAge: 0, timeout: 15000 }
+      );
     </script>
   </body>
 </html>
-
