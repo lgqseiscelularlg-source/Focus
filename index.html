@@ -1,242 +1,133 @@
 <!DOCTYPE html>
 <html lang="es">
-  <head>
-    <meta charset="UTF-8" />
-    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-    <title>RealityTour AR</title>
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>RealityTour AR</title>
 
-    <!-- Librerías -->
-    <script src="https://aframe.io/releases/1.2.0/aframe.min.js"></script>
-    <script src="https://cdn.jsdelivr.net/gh/jeromeetienne/AR.js@1.7.5/aframe/build/aframe-ar.js"></script>
+  <!-- Librerías -->
+  <script src="https://aframe.io/releases/1.2.0/aframe.min.js"></script>
+  <script src="https://cdn.jsdelivr.net/gh/jeromeetienne/AR.js@1.7.5/aframe/build/aframe-ar.js"></script>
 
-    <style>
-      body {
-        margin: 0;
-        overflow: hidden;
-        background: black;
-        color: white;
-      }
-      #permission-screen {
-        position: fixed;
-        top: 0;
-        left: 0;
-        width: 100vw;
-        height: 100vh;
-        display: flex;
-        flex-direction: column;
-        justify-content: center;
-        align-items: center;
-        background: rgba(0, 0, 0, 0.95);
-        z-index: 9999;
-        text-align: center;
-      }
-      #permission-screen button {
-        margin-top: 15px;
-        padding: 10px 20px;
-        border: none;
-        border-radius: 6px;
-        background: #ff4444;
-        color: white;
-        font-size: 16px;
-      }
-      #distance-label {
-        position: fixed;
-        bottom: 20px;
-        left: 50%;
-        transform: translateX(-50%);
-        background: rgba(0, 0, 0, 0.7);
-        color: white;
-        padding: 6px 12px;
-        border-radius: 4px;
-        font-size: 14px;
-        z-index: 10000;
-      }
-    </style>
-  </head>
-
-  <body>
-    <div id="permission-screen">
-      <h2>Permitir acceso</h2>
-      <p>Necesitamos cámara, ubicación y orientación para mostrar la RA.</p>
-      <button id="start-btn">Permitir y continuar</button>
-    </div>
-
-    <div id="distance-label" style="display:none;">Distancia: -- m</div>
-
-    <a-scene
-  vr-mode-ui="false"
-  embedded
-  renderer="logarithmicDepthBuffer: true;"
-  arjs="sourceType: webcam; videoTexture: true; trackingMethod: best; debugUIEnabled: false;"
->
-  <a-camera gps-camera rotation-reader></a-camera>
-</a-scene>
-
-<script>
-  const objetivo = { lat: -29.477051, lon: -66.889616 };
-  const radio = 5;
-  const distLabel = document.getElementById("distance-label");
-  let boxCreado = false;
-
-  // Esperamos a que AR.js inicialice la cámara
-  window.addEventListener("arjs-video-loaded", () => {
-    console.log("✅ Cámara lista, iniciando seguimiento GPS...");
-    navigator.geolocation.watchPosition(
-      (pos) => {
-        const { latitude, longitude } = pos.coords;
-        const distancia = distanciaMetros(latitude, longitude, objetivo.lat, objetivo.lon);
-        distLabel.textContent = `Distancia: ${distancia.toFixed(2)} m`;
-
-        if (distancia <= radio && !boxCreado) {
-          console.log("🧱 Dentro del radio — creando cubo...");
-          const scene = document.querySelector("a-scene");
-          const box = document.createElement("a-box");
-          box.setAttribute("gps-entity-place", `latitude: ${objetivo.lat}; longitude: ${objetivo.lon}`);
-          box.setAttribute("color", "red");
-          box.setAttribute("scale", "3 3 3");
-          box.setAttribute("position", "0 2 0");
-          scene.appendChild(box);
-          boxCreado = true;
-        }
-      },
-      (err) => {
-        console.error("Error de geolocalización:", err);
-        alert("No se pudo obtener la ubicación. Verifica los permisos de GPS.");
-      },
-      { enableHighAccuracy: true, maximumAge: 0, timeout: 15000 }
-    );
-  });
-
-  // Utilidades
-  const toRad = (deg) => (deg * Math.PI) / 180;
-  function distanciaMetros(lat1, lon1, lat2, lon2) {
-    const R = 6371e3;
-    const dLat = toRad(lat2 - lat1);
-    const dLon = toRad(lon2 - lon1);
-    const a =
-      Math.sin(dLat / 2) ** 2 +
-      Math.cos(toRad(lat1)) * Math.cos(toRad(lat2)) * Math.sin(dLon / 2) ** 2;
-    return R * 2 * Math.atan2(Math.sqrt(a), Math.sqrt(1 - a));
-  }
-</script>
-
-
-    <script>
-  const startBtn = document.getElementById("start-btn");
-  const permissionScreen = document.getElementById("permission-screen");
-  const geoBox = document.getElementById("geoBox");
-  const distLabel = document.getElementById("distance-label");
-
-  // Coordenadas del objetivo
-  const objetivo = { lat: -29.477051, lon: -66.889616 };
-  const radio = 5; // metros
-
-  let coordenadasProm = [];
-  let baseFijada = false;
-
-  // Convierte grados a radianes
-  const toRad = (deg) => (deg * Math.PI) / 180;
-
-  // Distancia Haversine en metros
-  function distanciaMetros(lat1, lon1, lat2, lon2) {
-    const R = 6371e3;
-    const dLat = toRad(lat2 - lat1);
-    const dLon = toRad(lon2 - lon1);
-    const a =
-      Math.sin(dLat / 2) ** 2 +
-      Math.cos(toRad(lat1)) * Math.cos(toRad(lat2)) * Math.sin(dLon / 2) ** 2;
-    return R * 2 * Math.atan2(Math.sqrt(a), Math.sqrt(1 - a));
-  }
-
-  // Promedio de lecturas GPS
-  function promedioCoordenadas(coords) {
-    const sumLat = coords.reduce((a, c) => a + c.lat, 0);
-    const sumLon = coords.reduce((a, c) => a + c.lon, 0);
-    return {
-      lat: sumLat / coords.length,
-      lon: sumLon / coords.length,
-    };
-  }
-
-  // Botón de inicio
-  startBtn.addEventListener("click", async () => {
-    try {
-      if (window.DeviceOrientationEvent && DeviceOrientationEvent.requestPermission) {
-        try {
-          await DeviceOrientationEvent.requestPermission();
-        } catch {}
-      }
-      navigator.geolocation.getCurrentPosition(
-        () => {
-          permissionScreen.style.display = "none";
-          distLabel.style.display = "block";
-          iniciarAR();
-        },
-        (err) => alert("Error al obtener ubicación: " + err.message),
-        { enableHighAccuracy: true, timeout: 15000 }
-      );
-    } catch (err) {
-      alert("Error general: " + err.message);
+  <style>
+    body { margin:0; overflow:hidden; background:#000; color:#fff; }
+    #permission-screen {
+      position:fixed; inset:0; display:flex; flex-direction:column;
+      justify-content:center; align-items:center; background:rgba(0,0,0,.95);
+      z-index:9999; text-align:center; padding:16px;
     }
-  });
+    #permission-screen button{
+      margin-top:12px; padding:10px 18px; border:0; border-radius:6px;
+      background:#ffb300; color:#000; font-weight:600;
+    }
+    #distance-label{
+      position:fixed; left:50%; bottom:18px; transform:translateX(-50%);
+      background:rgba(0,0,0,.7); padding:6px 10px; border-radius:6px;
+      font-size:14px; z-index:10000; display:none;
+    }
+  </style>
+</head>
+<body>
 
-  // Lógica principal AR
-  function iniciarAR() {
-    navigator.geolocation.watchPosition(
-      (pos) => {
-        const lat = pos.coords.latitude;
-        const lon = pos.coords.longitude;
+  <div id="permission-screen">
+    <h2>Permitir acceso</h2>
+    <p>Necesitamos cámara, ubicación y orientación para mostrar la RA.</p>
+    <button id="start-btn">Permitir y continuar</button>
+  </div>
 
-        // Fase 1: recolección inicial de coordenadas
-        if (!baseFijada) {
-          coordenadasProm.push({ lat, lon });
+  <div id="distance-label">Distancia: -- m</div>
 
-          if (coordenadasProm.length === 5) {
-            const base = promedioCoordenadas(coordenadasProm);
-            baseFijada = true;
-            console.log("📍 Base promedio fijada:", base);
+  <!-- Escena AR -->
+  <a-scene
+    vr-mode-ui="false"
+    embedded
+    renderer="logarithmicDepthBuffer: true;"
+    arjs="sourceType: webcam; videoTexture: true; trackingMethod: best; debugUIEnabled: false;"
+  >
+    <a-camera gps-camera rotation-reader></a-camera>
+  </a-scene>
 
-            // Distancia inicial al objetivo
-            const dist = distanciaMetros(base.lat, base.lon, objetivo.lat, objetivo.lon);
-            distLabel.textContent = `Distancia inicial: ${dist.toFixed(2)} m`;
+  <script>
+    // ===== Config =====
+    const objetivo = { lat: -29.477051, lon: -66.889616 };
+    const radio = 5; // metros
 
-            if (dist <= radio) {
-              mostrarObjetoFijo(base);
-            } else {
-              console.log("Fuera del radio inicial, objeto oculto");
-            }
-          }
-        } else {
-          // Una vez fijada la base, solo actualizamos distancia visual
-          const dist = distanciaMetros(lat, lon, objetivo.lat, objetivo.lon);
-          distLabel.textContent = `Distancia: ${dist.toFixed(2)} m`;
+    // ===== UI =====
+    const startBtn = document.getElementById('start-btn');
+    const overlay  = document.getElementById('permission-screen');
+    const distLbl  = document.getElementById('distance-label');
+
+    // ===== Estado =====
+    let boxCreado = false;
+
+    // ===== Utilidades =====
+    const toRad = d => d * Math.PI / 180;
+    function distanciaMetros(lat1, lon1, lat2, lon2) {
+      const R = 6371e3;
+      const dLat = toRad(lat2 - lat1);
+      const dLon = toRad(lon2 - lon1);
+      const a = Math.sin(dLat/2)**2 +
+                Math.cos(toRad(lat1))*Math.cos(toRad(lat2))*Math.sin(dLon/2)**2;
+      return R * 2 * Math.atan2(Math.sqrt(a), Math.sqrt(1-a));
+    }
+
+    // ===== Flujo de inicio =====
+    startBtn.addEventListener('click', async () => {
+      try {
+        // iOS: permiso de orientación si lo pide
+        if (window.DeviceOrientationEvent?.requestPermission) {
+          try { await DeviceOrientationEvent.requestPermission(); } catch {}
         }
-      },
-      (err) => console.error("Error GPS:", err),
-      { enableHighAccuracy: true, maximumAge: 0, timeout: 20000 }
-    );
-  }
+        // Disparar permiso de ubicación (una sola vez)
+        navigator.geolocation.getCurrentPosition(
+          () => {
+            overlay.style.display = 'none';
+            distLbl.style.display = 'block';
+            iniciar();
+          },
+          (err) => alert('No se pudo obtener la ubicación: ' + err.message),
+          { enableHighAccuracy: true, timeout: 15000 }
+        );
+      } catch (e) {
+        alert('Error general: ' + e.message);
+      }
+    });
 
-  // Fija el cubo en base a la posición promedio
-  function mostrarObjetoFijo(base) {
-    const dLat = objetivo.lat - base.lat;
-    const dLon = objetivo.lon - base.lon;
+    // ===== Lógica principal =====
+    function iniciar() {
+      // Esperamos a que el video de AR.js esté listo
+      window.addEventListener('arjs-video-loaded', () => {
+        console.log('✅ Cámara lista');
 
-    // Convertimos diferencia a metros aprox
-    const latMeters = dLat * 111320;
-    const lonMeters = dLon * (111320 * Math.cos(toRad(base.lat)));
+        // A partir de aquí, leemos posición en tiempo real
+        navigator.geolocation.watchPosition(
+          (pos) => {
+            const { latitude, longitude } = pos.coords;
+            const d = distanciaMetros(latitude, longitude, objetivo.lat, objetivo.lon);
+            distLbl.textContent = `Distancia: ${d.toFixed(2)} m`;
 
-    // Aumentamos la altura y dejamos visible forzado para test
-    const altura = 3; // metros sobre el suelo
-    geoBox.setAttribute("position", `${lonMeters.toFixed(2)} ${altura} ${-latMeters.toFixed(2)}`);
-    geoBox.setAttribute("visible", "true");
-    geoBox.setAttribute("scale", "3 3 3"); // más grande para test
-    console.log("✅ Objeto anclado en posición fija:", lonMeters, latMeters);
+            if (d <= radio && !boxCreado) {
+              console.log('🧱 Dentro del radio — creando cubo...');
+              crearCuboEnObjetivo();
+              boxCreado = true;
+            }
+          },
+          (err) => console.error('Error watchPosition:', err),
+          { enableHighAccuracy: true, maximumAge: 0, timeout: 20000 }
+        );
+      }, { once: true });
+    }
 
-
-    console.log("✅ Objeto anclado en posición fija");
-  }
-</script>
-
-  </body>
+    function crearCuboEnObjetivo() {
+      const scene = document.querySelector('a-scene');
+      const box   = document.createElement('a-box');
+      box.setAttribute('id', 'geoBox');
+      box.setAttribute('gps-entity-place', `latitude: ${objetivo.lat}; longitude: ${objetivo.lon}`);
+      box.setAttribute('color', 'red');
+      box.setAttribute('scale', '3 3 3');
+      box.setAttribute('position', '0 2 0'); // 2 m de altura
+      scene.appendChild(box);
+    }
+  </script>
+</body>
 </html>
