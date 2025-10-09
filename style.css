@@ -48,3 +48,17 @@ body {
   padding: 0;
 }
 
+#version-label {
+  position: fixed;
+  bottom: 14px;
+  left: 14px;
+  color: rgba(255, 255, 255, 0.6);
+  font-size: 13px;
+  font-family: system-ui, sans-serif;
+  text-shadow: 0 0 3px rgba(0, 0, 0, 0.6);
+  user-select: none;
+  z-index: 1000;
+}
+
+
+
