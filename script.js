@@ -21,17 +21,23 @@ navigator.geolocation.watchPosition(
     const distancia = calcularDistancia(lat, lon, target.lat, target.lon);
 
     console.log("Distancia actual: " + distancia.toFixed(2) + " m");
-
-    if (distancia <= radio) {
-      objeto.setAttribute("visible", "true");
     
-      // Mostramos el objeto a 3 m delante del usuario y 2 m de altura
-      objeto.removeAttribute("gps-entity-place"); // Desactiva seguimiento GPS
-      objeto.setAttribute("position", "0 2 -3");  // X=0, Y=2m, Z=-3m (3 metros al frente)
-    } else {
-      objeto.setAttribute("visible", "false");
-      objeto.setAttribute("gps-entity-place", `latitude: ${target.lat}; longitude: ${target.lon}`);
-    }
+if (distancia <= radio) {
+  objeto.setAttribute("visible", "true");
+
+  // Pequeño retardo para evitar conflictos de render
+  setTimeout(() => {
+    objeto.removeAttribute("gps-entity-place");
+    objeto.setAttribute("position", "0 2 -3");
+  }, 500);
+} else {
+  objeto.setAttribute("visible", "false");
+  objeto.setAttribute(
+    "gps-entity-place",
+    `latitude: ${target.lat}; longitude: ${target.lon}`
+  );
+}
+
 
   },
   (err) => console.error(err),
