@@ -32,14 +32,24 @@
       vr-mode-ui="false"
       arjs="sourceType: webcam; trackingMethod: best; debugUIEnabled: false;"
     >
-      <!-- Cubo 3D geolocalizado -->
+      <!-- Cubo 3D geolocalizado 
       <a-box
         id="geoBox"
         gps-entity-place="latitude: -29.477051; longitude: -66.889616"
         color="red"
         scale="2 2 2"
         visible="false"
-      ></a-box>
+      ></a-box> -->
+      
+      <!-- Modelo 3D GLB -->
+      <a-entity
+        id="objeto3d"
+        gltf-model="models/modelo.glb"
+        position="0 2 -3"
+        scale="0.5 0.5 0.5"
+        visible="false"
+      ></a-entity>
+
 
       <a-camera gps-camera rotation-reader></a-camera>
     </a-scene>
