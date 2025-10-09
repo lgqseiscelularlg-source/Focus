@@ -5,91 +5,40 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
     <title>RealityTour AR</title>
 
-    <!-- Librerías base -->
+    <!-- Librerías -->
     <script src="https://aframe.io/releases/1.2.0/aframe.min.js"></script>
     <script src="https://cdn.jsdelivr.net/gh/jeromeetienne/AR.js@1.7.5/aframe/build/aframe-ar.js"></script>
 
-    <style>
-      body {
-        margin: 0;
-        padding: 0;
-        overflow: hidden;
-        background-color: black;
-        color: white;
-        font-family: sans-serif;
-      }
-
-      #desktop-warning {
-        position: fixed;
-        top: 0;
-        left: 0;
-        width: 100vw;
-        height: 100vh;
-        background: rgba(0, 0, 0, 0.9);
-        color: white;
-        display: flex;
-        flex-direction: column;
-        justify-content: center;
-        align-items: center;
-        text-align: center;
-        z-index: 9999;
-      }
-
-      #desktop-warning.hidden {
-        display: none;
-      }
-
-      #desktop-warning button {
-        margin-top: 15px;
-        padding: 10px 20px;
-        border: none;
-        border-radius: 6px;
-        background: #ff4444;
-        color: white;
-        font-size: 16px;
-        cursor: pointer;
-      }
-    </style>
+    <link rel="stylesheet" href="style.css" />
   </head>
-
   <body>
-    <!-- Mensaje para escritorio -->
-    <div id="desktop-warning" class="hidden">
-      <h2>¡Atención!</h2>
-      <p>
-        Para una mejor experiencia de Realidad Aumentada, abre esta página desde
-        un dispositivo móvil o tablet.
-      </p>
-      <button
-        onclick="document.getElementById('desktop-warning').classList.add('hidden')"
-      >
-        Continuar igualmente
-      </button>
-    </div>
+    <!-- Etiqueta discreta para mostrar la distancia -->
+    <div id="distance-label">Distancia: -- m</div>
 
-    <!-- Escena AR -->
+    <!-- Escena principal -->
     <a-scene
       embedded
-      arjs="sourceType: webcam; trackingMethod: best; debugUIEnabled: false;"
+      vr-mode-ui="false"
+      renderer="logarithmicDepthBuffer: true;"
+      arjs="sourceType: webcam; videoTexture: true; trackingMethod: best; debugUIEnabled: false;"
     >
-      <!-- Cubo 3D -->
+      <a-camera gps-camera rotation-reader></a-camera>
+
+      <!-- Cubo geolocalizado -->
       <a-box
         id="geoBox"
         gps-entity-place="latitude: -29.477051; longitude: -66.889616"
         color="red"
         scale="2 2 2"
-        position="0 1.5 -3"
+        position="0 2 0"
         visible="false"
       ></a-box>
-
-      <!-- Cámara con GPS -->
-      <a-camera gps-camera rotation-reader></a-camera>
     </a-scene>
 
-    <!-- Script principal -->
     <script src="script.js"></script>
   </body>
 </html>
+
 
 
 
