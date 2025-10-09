@@ -6,7 +6,8 @@ if (!/Mobi|Android/i.test(navigator.userAgent)) {
 // Variables de control
 const radio = 5; // metros
 const target = { lat: -29.477051, lon: -66.889616 };
-const objeto = document.getElementById("geoBox");
+const objeto = document.getElementById("geoBox");     // Cubo geolocalizado
+const objeto3d = document.getElementById("objeto3d"); // Modelo GLB
 
 // Observa la ubicación del usuario
 navigator.geolocation.watchPosition(
@@ -26,12 +27,17 @@ navigator.geolocation.watchPosition(
 
     // Control de aparición del objeto según la distancia
     if (distancia <= radio) {
+      // 🔹 Oculta el cubo geolocalizado
+      objeto.setAttribute("visible", "false");
+
+      // 🔹 Muestra el modelo 3D GLB frente al usuario
       setTimeout(() => {
-        objeto.removeAttribute("gps-entity-place");
-        objeto.setAttribute("position", "0 2 -3");
-        objeto.setAttribute("visible", "true");
+        objeto3d.setAttribute("visible", "true");
+        objeto3d.setAttribute("position", "0 2 -3"); // 2 m de altura, 3 m delante
       }, 500);
     } else {
+      // 🔹 Vuelve a mostrar el cubo geolocalizado
+      objeto3d.setAttribute("visible", "false");
       objeto.setAttribute("visible", "false");
       objeto.setAttribute(
         "gps-entity-place",
@@ -63,6 +69,7 @@ function calcularDistancia(lat1, lon1, lat2, lon2) {
 
   return R * 2 * Math.atan2(Math.sqrt(a), Math.sqrt(1 - a));
 }
+
 
 
 
