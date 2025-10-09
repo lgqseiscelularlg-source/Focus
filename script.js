@@ -4,7 +4,7 @@ if (!/Mobi|Android/i.test(navigator.userAgent)) {
 }
 
 // Variables de control
-const radio = 5; // metros
+const radio = 7; // metros
 const target = { lat: -29.477051, lon: -66.889616 };
 const objeto = document.getElementById("geoBox");     // Cubo geolocalizado
 const objeto3d = document.getElementById("objeto3d"); // Modelo GLB
