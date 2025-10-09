@@ -18,18 +18,16 @@
         Continuar igualmente
       </button>
     </div>
-    
-  
 
+    <!-- Texto flotante para la distancia -->
+    <div id="distancia-display">Distancia: -- m</div>
+
+    <!-- Escena AR principal -->
     <a-scene
       embedded
       vr-mode-ui="false"
       arjs="sourceType: webcam; trackingMethod: best; debugUIEnabled: false;"
-      <div id="distancia-display">Distancia: -- m</div>
-
     >
-      
-      <div id="distancia-display">Distancia: -- m</div>
       <!-- Cubo 3D geolocalizado -->
       <a-box
         id="geoBox"
@@ -45,6 +43,7 @@
     <script src="script.js"></script>
   </body>
 </html>
+
 
 
 
