@@ -4,7 +4,7 @@ if (!/Mobi|Android/i.test(navigator.userAgent)) {
 }
 
 // Variables de control
-const radio = 2; // metros
+const radio = 10; // metros
 const target = { lat: -29.477051, lon: -66.889616 };
 const objeto = document.getElementById("geoBox");
 
@@ -40,6 +40,7 @@ function calcularDistancia(lat1, lon1, lat2, lon2) {
     Math.cos(φ1) * Math.cos(φ2) * Math.sin(Δλ / 2) ** 2;
   return R * 2 * Math.atan2(Math.sqrt(a), Math.sqrt(1 - a));
 }
+
 
 
 
