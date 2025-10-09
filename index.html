@@ -3,11 +3,11 @@
   <head>
     <meta charset="UTF-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-    <title>RealityTour AR - Base estable</title>
+    <title>RealityTour AR</title>
 
     <!-- Librerías -->
     <script src="https://aframe.io/releases/1.2.0/aframe.min.js"></script>
-    <script src="https://rawcdn.githack.com/jeromeetienne/AR.js/1.7.5/aframe/build/aframe-ar.js"></script>
+    <script src="https://cdn.jsdelivr.net/gh/AR-js-org/AR.js@3.3.2/aframe/build/aframe-ar.js"></script>
 
     <style>
       body {
@@ -70,16 +70,14 @@
       arjs="sourceType: webcam; videoTexture: true; trackingMethod: best; debugUIEnabled: false;"
     >
       <a-camera gps-camera rotation-reader></a-camera>
-
-      <!-- Cubo geolocalizado -->
-      <a-box
+      <a-entity
         id="geoBox"
-        gps-entity-place="latitude: -29.477051; longitude: -66.889616"
-        color="red"
+        geometry="primitive: box"
+        material="color: red;"
+        position="0 2 -10"
         scale="3 3 3"
-        position="0 2 0"
         visible="false"
-      ></a-box>
+      ></a-entity>
     </a-scene>
 
     <script>
@@ -89,9 +87,8 @@
       const geoBox = document.getElementById("geoBox");
 
       const objetivo = { lat: -29.477051, lon: -66.889616 };
-      const radio = 5; // metros
+      const radio = 5;
 
-      // Funciones auxiliares
       const toRad = (deg) => (deg * Math.PI) / 180;
       function distanciaMetros(lat1, lon1, lat2, lon2) {
         const R = 6371e3;
@@ -105,7 +102,6 @@
         return R * 2 * Math.atan2(Math.sqrt(a), Math.sqrt(1 - a));
       }
 
-      // Botón principal
       startBtn.addEventListener("click", async () => {
         try {
           if (window.DeviceOrientationEvent && DeviceOrientationEvent.requestPermission) {
@@ -128,16 +124,15 @@
         }
       });
 
-      // Seguimiento
       function iniciarAR() {
         navigator.geolocation.watchPosition(
           (pos) => {
             const lat = pos.coords.latitude;
             const lon = pos.coords.longitude;
-
             const dist = distanciaMetros(lat, lon, objetivo.lat, objetivo.lon);
             distLabel.textContent = `Distancia: ${dist.toFixed(2)} m`;
 
+            // ✅ Si está en rango, mostramos el cubo a 10 metros al frente
             if (dist <= radio) {
               geoBox.setAttribute("visible", "true");
             } else {
@@ -151,3 +146,4 @@
     </script>
   </body>
 </html>
+
