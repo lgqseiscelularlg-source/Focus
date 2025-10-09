@@ -3,95 +3,93 @@
   <head>
     <meta charset="UTF-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-    <title>RealityTour AR - Base estable</title>
+    <title>RealityTour AR</title>
 
-    <!-- Librerías estables -->
+    <!-- Librerías base -->
     <script src="https://aframe.io/releases/1.2.0/aframe.min.js"></script>
-    <script src="https://cdn.jsdelivr.net/gh/AR-js-org/AR.js@3.3.2/aframe/build/aframe-ar.js"></script>
+    <script src="https://cdn.jsdelivr.net/gh/jeromeetienne/AR.js@1.7.5/aframe/build/aframe-ar.js"></script>
 
     <style>
       body {
         margin: 0;
+        padding: 0;
         overflow: hidden;
-        background: black;
+        background-color: black;
         color: white;
+        font-family: sans-serif;
       }
-      #distance-label {
+
+      #desktop-warning {
         position: fixed;
-        bottom: 20px;
-        left: 50%;
-        transform: translateX(-50%);
-        background: rgba(0, 0, 0, 0.7);
+        top: 0;
+        left: 0;
+        width: 100vw;
+        height: 100vh;
+        background: rgba(0, 0, 0, 0.9);
         color: white;
-        padding: 6px 12px;
-        border-radius: 4px;
-        font-size: 14px;
-        z-index: 10000;
+        display: flex;
+        flex-direction: column;
+        justify-content: center;
+        align-items: center;
+        text-align: center;
+        z-index: 9999;
+      }
+
+      #desktop-warning.hidden {
+        display: none;
+      }
+
+      #desktop-warning button {
+        margin-top: 15px;
+        padding: 10px 20px;
+        border: none;
+        border-radius: 6px;
+        background: #ff4444;
+        color: white;
+        font-size: 16px;
+        cursor: pointer;
       }
     </style>
   </head>
 
   <body>
-    <div id="distance-label">Distancia: -- m</div>
+    <!-- Mensaje para escritorio -->
+    <div id="desktop-warning" class="hidden">
+      <h2>¡Atención!</h2>
+      <p>
+        Para una mejor experiencia de Realidad Aumentada, abre esta página desde
+        un dispositivo móvil o tablet.
+      </p>
+      <button
+        onclick="document.getElementById('desktop-warning').classList.add('hidden')"
+      >
+        Continuar igualmente
+      </button>
+    </div>
 
+    <!-- Escena AR -->
     <a-scene
-      vr-mode-ui="false"
       embedded
-      renderer="logarithmicDepthBuffer: true;"
-      arjs="sourceType: webcam; videoTexture: true; trackingMethod: best; debugUIEnabled: false;"
+      arjs="sourceType: webcam; trackingMethod: best; debugUIEnabled: false;"
     >
-      <!-- Cámara con GPS -->
-      <a-camera gps-camera rotation-reader></a-camera>
-
-      <!-- Cubo rojo geolocalizado -->
+      <!-- Cubo 3D -->
       <a-box
         id="geoBox"
         gps-entity-place="latitude: -29.477051; longitude: -66.889616"
         color="red"
-        scale="3 3 3"
-        position="0 2 0"
+        scale="2 2 2"
+        position="0 1.5 -3"
+        visible="false"
       ></a-box>
+
+      <!-- Cámara con GPS -->
+      <a-camera gps-camera rotation-reader></a-camera>
     </a-scene>
 
-    <script>
-      const geoBox = document.getElementById("geoBox");
-      const distLabel = document.getElementById("distance-label");
-
-      const objetivo = { lat: -29.477051, lon: -66.889616 };
-      const radio = 5;
-
-      const toRad = (deg) => (deg * Math.PI) / 180;
-      function distanciaMetros(lat1, lon1, lat2, lon2) {
-        const R = 6371e3;
-        const dLat = toRad(lat2 - lat1);
-        const dLon = toRad(lon2 - lon1);
-        const a =
-          Math.sin(dLat / 2) ** 2 +
-          Math.cos(toRad(lat1)) *
-            Math.cos(toRad(lat2)) *
-            Math.sin(dLon / 2) ** 2;
-        return R * 2 * Math.atan2(Math.sqrt(a), Math.sqrt(1 - a));
-      }
-
-      navigator.geolocation.watchPosition(
-        (pos) => {
-          const lat = pos.coords.latitude;
-          const lon = pos.coords.longitude;
-          const dist = distanciaMetros(lat, lon, objetivo.lat, objetivo.lon);
-          distLabel.textContent = `Distancia: ${dist.toFixed(2)} m`;
-
-          // Mostrar o esconder el cubo
-          if (dist <= radio) {
-            geoBox.setAttribute("visible", "true");
-          } else {
-            geoBox.setAttribute("visible", "false");
-          }
-        },
-        (err) => console.error("Error GPS:", err),
-        { enableHighAccuracy: true, maximumAge: 0, timeout: 20000 }
-      );
-    </script>
+    <!-- Script principal -->
+    <script src="script.js"></script>
   </body>
 </html>
+
 
 
