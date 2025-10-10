@@ -1,85 +1,47 @@
-// === Componente de gestos (rotar con 1 dedo, zoom con 2) ===
+// === GESTURE HANDLER (rotar y hacer zoom) ===
 AFRAME.registerComponent("gesture-handler", {
-  schema: { enabled: { default: true }, min: { default: 20 }, max: { default: 1000 } },
+  schema: { enabled: { default: true }, min: { default: 50 }, max: { default: 1000 } },
   init: function () {
     const el = this.el;
     const sceneEl = el.sceneEl;
+    this.scaleStart = el.object3D.scale.x;
+    this.rotStart = el.object3D.rotation.y;
+    this.touchStartX = 0;
+    this.pinchStartDist = 0;
 
-    // Estados
-    this._rotStartDeg = THREE.MathUtils.radToDeg(el.object3D.rotation.y) || 0;
-    this._scaleStart = el.object3D.scale.x || 1;
-    this._touchStartX = 0;
-    this._pinchStartDist = 0;
-
-    // Adjuntar listeners cuando el canvas exista
+    // Esperar a que el canvas exista
     const attach = () => {
-      const target = sceneEl.canvas || sceneEl.renderer?.domElement || document.body;
-
-      // Aseguramos passive:false para poder e.preventDefault()
-      const opts = { passive: false };
-
-      target.addEventListener("touchstart", this._onStart.bind(this), opts);
-      target.addEventListener("touchmove",  this._onMove.bind(this),  opts);
-      target.addEventListener("touchend",   this._onEnd.bind(this),   opts);
-      target.addEventListener("touchcancel",this._onEnd.bind(this),   opts);
+      const canvas = sceneEl.canvas;
+      canvas.addEventListener("touchstart", this._start.bind(this), { passive: false });
+      canvas.addEventListener("touchmove", this._move.bind(this), { passive: false });
     };
-
     if (sceneEl.canvas) attach();
-    else sceneEl.addEventListener("render-target-loaded", attach, { once: true });
+    else sceneEl.addEventListener("render-target-loaded", attach);
   },
-
-  _onStart: function (e) {
-    if (!this.data.enabled) return;
-    e.preventDefault();
-
-    const el = this.el;
-
+  _start: function (e) {
     if (e.touches.length === 1) {
-      this._touchStartX = e.touches[0].pageX;
-      // Tomar rotación actual como base
-      this._rotStartDeg = THREE.MathUtils.radToDeg(el.object3D.rotation.y);
+      this.touchStartX = e.touches[0].pageX;
+      this.rotStart = this.el.object3D.rotation.y;
     } else if (e.touches.length === 2) {
-      this._pinchStartDist = this._dist(e.touches[0], e.touches[1]);
-      // Tomar escala actual como base (no asumir 1)
-      this._scaleStart = el.object3D.scale.x;
+      this.pinchStartDist = this._dist(e.touches);
+      this.scaleStart = this.el.object3D.scale.x;
     }
   },
-
-  _onMove: function (e) {
-    if (!this.data.enabled) return;
-    e.preventDefault();
-
-    const el = this.el;
-
+  _move: function (e) {
     if (e.touches.length === 1) {
-      // ROTACIÓN (eje Y)
-      const deltaX = e.touches[0].pageX - this._touchStartX;
-      const rotDeg = this._rotStartDeg + deltaX * 0.4; // sensibilidad
-      el.object3D.rotation.y = THREE.MathUtils.degToRad(rotDeg);
+      const dx = e.touches[0].pageX - this.touchStartX;
+      this.el.object3D.rotation.y = this.rotStart - dx * 0.005; // sensibilidad
     } else if (e.touches.length === 2) {
-      // ZOOM (escala uniforme)
-      const newDist = this._dist(e.touches[0], e.touches[1]);
-      const factor = newDist / this._pinchStartDist;
-      let newScale = this._scaleStart * factor;
-
-      // Limitar escala a un rango razonable (depende de tu modelo)
-      newScale = Math.max(this.data.min, Math.min(this.data.max, newScale));
-
-      el.object3D.scale.set(newScale, newScale, newScale);
+      const d = this._dist(e.touches);
+      let s = (d / this.pinchStartDist) * this.scaleStart;
+      s = Math.min(this.data.max, Math.max(this.data.min, s));
+      this.el.object3D.scale.set(s, s, s);
     }
   },
-
-  _onEnd: function (e) {
-    // No necesitamos lógica especial aquí, pero se deja por claridad
-  },
-
-  _dist: function (a, b) {
-    const dx = a.pageX - b.pageX;
-    const dy = a.pageY - b.pageY;
-    return Math.sqrt(dx * dx + dy * dy);
-  }
+  _dist: (t) => Math.hypot(t[0].pageX - t[1].pageX, t[0].pageY - t[1].pageY)
 });
-// === Fin componente de gestos ===
+// === FIN GESTURE HANDLER ===
+
 
 //-------------------------------------------------------------------------------------------
 
@@ -94,6 +56,8 @@ const target = { lat: -29.477051, lon: -66.889616 };
 const objeto = document.getElementById("geoBox");     // Cubo geolocalizado
 const objeto3d = document.getElementById("objeto3d"); // Modelo GLB
 objeto3d.setAttribute("visible", "true");
+const wrapper3d = document.getElementById("wrapper3d");
+
 
 
 // Observa la ubicación del usuario
@@ -111,25 +75,37 @@ navigator.geolocation.watchPosition(
     if (display) {
       display.innerText = "Distancia: " + distancia.toFixed(1) + " m";
     }
-
-    // Control de aparición del objeto según la distancia
+//------------------------
+    // Control de aparición del objeto según la distancia (versión con wrapper geolocalizado)
     if (distancia <= radio) {
-      // 🔹 Oculta el cubo geolocalizado
+      // 🔹 Oculta el cubo geolocalizado (lo dejamos como fallback apagado)
       objeto.setAttribute("visible", "false");
-
-      // 🔹 Muestra el modelo 3D GLB
-      setTimeout(() => {
+    
+      // 🔹 Muestra el contenedor geolocalizado que ANCLA el modelo en el mundo
+      // (El modelo 'objeto3d' está dentro y recibe los gestos)
+      wrapper3d.setAttribute("visible", "true");
+    
+      // 🔹 Asegura que el modelo esté visible por si en versiones previas quedó oculto
       objeto3d.setAttribute("visible", "true");
-      }, 500);
     } else {
-      // 🔹 Vuelve a mostrar el cubo geolocalizado
-      objeto3d.setAttribute("visible", "false");
+      // 🔹 Oculta el contenedor (y por ende el modelo)
+      wrapper3d.setAttribute("visible", "false");
+    
+      // 🔹 Mantenemos el cubo oculto (si quisieras mostrarlo fuera del radio, ponelo en true)
       objeto.setAttribute("visible", "false");
+    
+      // 🔹 Reinyecta el gps-entity-place del cubo por compatibilidad (no es estrictamente necesario,
+      //     pero lo conservo porque ya lo tenías y no interfiere con el wrapper)
       objeto.setAttribute(
         "gps-entity-place",
         `latitude: ${target.lat}; longitude: ${target.lon}`
       );
+    
+      // 🔹 Por si en alguna prueba dejaste el modelo visible manualmente
+      objeto3d.setAttribute("visible", "false");
     }
+
+  //-----------------
   },
   (err) => {
     console.error("Error de geolocalización:", err);
