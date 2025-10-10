@@ -119,6 +119,17 @@ navigator.geolocation.watchPosition(
     }
   },
   { enableHighAccuracy: true }
+
+    // Desactiva el drag táctil de la cámara y deja activos los sensores
+  const cam = document.querySelector("a-camera");
+  cam.addEventListener("loaded", () => {
+    const lc = cam.components["look-controls"];
+    if (lc && lc.data) {
+      // A-Frame 1.2: algunos builds soportan touchEnabled; si no existe, ignora.
+      if ("touchEnabled" in lc.data) lc.data.touchEnabled = false;
+    }
+  });
+
 );
 
 // Fórmula de Haversine
