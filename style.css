@@ -60,5 +60,10 @@ body {
   z-index: 1000;
 }
 
+/* Evita que el navegador intercepte el pinch/scroll encima del canvas */
+a-scene, canvas.a-canvas {
+  touch-action: none;
+}
+
 
 
