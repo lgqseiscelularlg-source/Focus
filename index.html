@@ -23,7 +23,7 @@
     <div id="distancia-display">Distancia: -- m</div>
 
     <!-- Texto flotante para la version que se compila -->
-    <div id="version-label">Versión 7</div>
+    <div id="version-label">Versión 1</div>
 
 
     <!-- Escena AR principal -->
@@ -41,15 +41,14 @@
         visible="false"
       ></a-box> 
       
-      <!-- Modelo 3D GLB -->
-      <a-entity
-        id="objeto3d"
-        gltf-model="./models/goku.glb"
-        position="0 2 -3"
-        scale="100 100 100"
-        visible="false"
-      ></a-entity>
-
+    <!-- Modelo 3D GLB geolocalizado -->
+    <a-entity
+      id="objeto3d"
+      gltf-model="./models/goku.glb"
+      gps-entity-place="latitude: -29.477051; longitude: -66.889616"
+      scale="5 5 5"
+      visible="false"
+    ></a-entity>
 
       <a-camera gps-camera rotation-reader></a-camera>
     </a-scene>
