@@ -2,7 +2,7 @@
 <html lang="es">
   <head>
     <meta charset="UTF-8" />
-    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no" />
     <title>RealityTour AR</title>
     <link rel="stylesheet" href="style.css" />
 
@@ -23,7 +23,7 @@
     <div id="distancia-display">Distancia: -- m</div>
 
     <!-- Texto flotante para la version que se compila -->
-    <div id="version-label">Versión 6</div>
+    <div id="version-label">Versión 7</div>
 
 
     <!-- Escena AR principal -->
@@ -41,23 +41,29 @@
         visible="false"
       ></a-box> 
       
-    <!-- Modelo 3D GLB geolocalizado con control de gestos -->
+    <!-- Wrapper geolocalizado (ancla en GPS) -->
     <a-entity
       id="wrapper3d"
       gps-entity-place="latitude: -29.477051; longitude: -66.889616"
       position="0 2 0"
       visible="false"
     >
-    <a-entity
-      id="objeto3d"
-      gltf-model="./models/goku.glb"
-      scale="300 300 300"
-      gesture-fix
-    ></a-entity>
-      
+      <!-- Hijo: aquí aplicamos rotación/zoom -->
+      <a-entity
+        id="objeto3d"
+        gltf-model="./models/goku.glb"
+        scale="300 300 300"
+        rotation="0 0 0"
+        gesture-controls
+      ></a-entity>
     </a-entity>
 
-      <a-camera gps-camera rotation-reader></a-camera>
+    <a-camera
+      gps-camera
+      rotation-reader
+      look-controls="touchEnabled: false; magicWindowTrackingEnabled: true"
+    ></a-camera>
+
     </a-scene>
     
     <script src="script.js"></script>
