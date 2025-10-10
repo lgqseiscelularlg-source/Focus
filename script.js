@@ -32,10 +32,9 @@ navigator.geolocation.watchPosition(
       // 🔹 Oculta el cubo geolocalizado
       objeto.setAttribute("visible", "false");
 
-      // 🔹 Muestra el modelo 3D GLB frente al usuario
+      // 🔹 Muestra el modelo 3D GLB
       setTimeout(() => {
-        objeto3d.setAttribute("visible", "true");
-        objeto3d.setAttribute("position", "0 2 -3"); // 2 m de altura, 3 m delante
+      objeto3d.setAttribute("visible", "true");
       }, 500);
     } else {
       // 🔹 Vuelve a mostrar el cubo geolocalizado
