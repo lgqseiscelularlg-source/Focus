@@ -23,7 +23,7 @@
     <div id="distancia-display">Distancia: -- m</div>
 
     <!-- Texto flotante para la version que se compila -->
-    <div id="version-label">Versión 2</div>
+    <div id="version-label">Versión 3</div>
 
 
     <!-- Escena AR principal -->
@@ -49,11 +49,70 @@
       position="0 2 0"
       scale="200 200 200"
       visible="false"
+      gesture-handler
     ></a-entity>
 
       <a-camera gps-camera rotation-reader></a-camera>
     </a-scene>
 
+        <!-- Modulo para gestos sobre el objeto -->
+        <script>
+    AFRAME.registerComponent("gesture-handler", {
+      schema: {
+        enabled: { default: true },
+      },
+      init: function () {
+        this.handleScale = 1;
+        this.handleRotation = 0;
+        this.startRotation = 0;
+        this.startDistance = 0;
+    
+        const el = this.el;
+        const sceneEl = el.sceneEl;
+    
+        // Un solo dedo → rotar
+        sceneEl.canvas.addEventListener("touchstart", (e) => {
+          if (e.touches.length === 1) {
+            this.startX = e.touches[0].pageX;
+            this.startRotation = this.handleRotation;
+          } else if (e.touches.length === 2) {
+            this.startDistance = this.getDistance(e.touches);
+            this.startScale = this.handleScale;
+          }
+        });
+    
+        sceneEl.canvas.addEventListener("touchmove", (e) => {
+          if (!this.data.enabled) return;
+    
+          // Rotación
+          if (e.touches.length === 1) {
+            const deltaX = e.touches[0].pageX - this.startX;
+            this.handleRotation = this.startRotation + deltaX * 0.5;
+            el.object3D.rotation.y = THREE.MathUtils.degToRad(this.handleRotation);
+          }
+    
+          // Zoom (pinch)
+          if (e.touches.length === 2) {
+            const newDistance = this.getDistance(e.touches);
+            const scaleChange = newDistance / this.startDistance;
+            this.handleScale = this.startScale * scaleChange;
+            el.object3D.scale.set(
+              this.handleScale,
+              this.handleScale,
+              this.handleScale
+            );
+          }
+        });
+      },
+      getDistance(touches) {
+        const dx = touches[0].pageX - touches[1].pageX;
+        const dy = touches[0].pageY - touches[1].pageY;
+        return Math.sqrt(dx * dx + dy * dy);
+      },
+    });
+    </script>
+
+    
     <script src="script.js"></script>
   </body>
 </html>
