@@ -43,7 +43,7 @@ AFRAME.registerComponent("gesture-handler", {
 // === FIN GESTURE HANDLER ===
 
 
-//-------------------------------------------------------------------------------------------
+//------------------------------------------------------------------------------------------
 
 // Mostrar advertencia si se abre desde escritorio
 if (!/Mobi|Android/i.test(navigator.userAgent)) {
