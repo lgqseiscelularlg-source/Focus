@@ -2,11 +2,14 @@
 <html lang="es">
   <head>
     <meta charset="UTF-8" />
-    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no" />
+    <meta
+      name="viewport"
+      content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no"
+    />
     <title>RealityTour AR</title>
     <link rel="stylesheet" href="style.css" />
 
-    <!-- Librerías de A-Frame y AR.js -->
+    <!-- Librerías principales -->
     <script src="https://aframe.io/releases/1.2.0/aframe.min.js"></script>
     <script src="https://rawcdn.githack.com/jeromeetienne/AR.js/1.7.5/aframe/build/aframe-ar.js"></script>
   </head>
@@ -14,63 +17,40 @@
   <body>
     <div id="desktop-warning" class="hidden">
       <p>Para una mejor experiencia, abre esta página desde un dispositivo móvil.</p>
-      <button onclick="document.getElementById('desktop-warning').style.display='none'">
+      <button
+        onclick="document.getElementById('desktop-warning').style.display='none'"
+      >
         Continuar igualmente
       </button>
     </div>
 
-    <!-- Texto flotante para la distancia -->
     <div id="distancia-display">Distancia: -- m</div>
+    <div id="version-label">Versión 7</div>
 
-    <!-- Texto flotante para la version que se compila -->
-    <div id="version-label">Versión 9</div>
-
-
-    <!-- Escena AR principal -->
     <a-scene
       embedded
       vr-mode-ui="false"
       arjs="sourceType: webcam; trackingMethod: best; debugUIEnabled: false;"
     >
-      <!-- Cubo 3D geolocalizado -->
-      <a-box
-        id="geoBox"
+      <!-- Anclaje geolocalizado -->
+      <a-entity
+        id="anchor"
         gps-entity-place="latitude: -29.477051; longitude: -66.889616"
-        color="red"
-        scale="2 2 2"
-        visible="false"
-      ></a-box> 
-      
-    <!-- Wrapper geolocalizado (ancla en GPS) -->
-    <a-entity
-      id="wrapper3d"
-      gps-entity-place="latitude: -29.477051; longitude: -66.889616"
-      position="0 2 0"
-      visible="false"
-      gps-gesture
-    >
-      <a-entity id="pivot3d">
-        <a-entity
-          id="objeto3d"
-          gltf-model="./models/goku.glb"
-          scale="300 300 300"
-          rotation="0 0 0"
-        ></a-entity>
+        position="0 0 0"
+      >
       </a-entity>
-    </a-entity>
 
-
-    <a-camera
-      gps-camera
-      rotation-reader
-      look-controls="touchEnabled: false; magicWindowTrackingEnabled: true"
-    ></a-camera>
-
+      <a-camera
+        gps-camera
+        rotation-reader
+        look-controls="touchEnabled: false; magicWindowTrackingEnabled: true"
+      ></a-camera>
     </a-scene>
-    
+
     <script src="script.js"></script>
   </body>
 </html>
+
 
 
 
