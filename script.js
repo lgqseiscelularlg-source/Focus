@@ -1,40 +1,41 @@
-// === GESTURES (AR.js compatible) ===
-AFRAME.registerComponent("gesture-arjs", {
+// === CONTROL DE GESTOS SOBRE MODELO GPS ===
+AFRAME.registerComponent("gps-gesture", {
   schema: { rotFactor: { default: 0.004 }, minScale: { default: 50 }, maxScale: { default: 1500 } },
   init: function () {
-    const el = this.el;
-    let startX = 0, startY = 0;
-    let startRotY = 0;
-    let startScale = el.object3D.scale.x;
-    let pinchStartDist = 0;
+    const pivot = document.getElementById("pivot3d");
+    if (!pivot) return;
+
+    let startX = 0;
+    let startScale = pivot.object3D.scale.x;
+    let pinchStart = 0;
 
     const getDist = (t) => Math.hypot(t[0].pageX - t[1].pageX, t[0].pageY - t[1].pageY);
 
     window.addEventListener("touchstart", (e) => {
       if (e.touches.length === 1) {
         startX = e.touches[0].pageX;
-        startRotY = el.object3D.rotation.y;
       } else if (e.touches.length === 2) {
-        pinchStartDist = getDist(e.touches);
-        startScale = el.object3D.scale.x;
+        pinchStart = getDist(e.touches);
+        startScale = pivot.object3D.scale.x;
       }
-    }, { passive: false });
+    });
 
     window.addEventListener("touchmove", (e) => {
       if (e.touches.length === 1) {
         const dx = e.touches[0].pageX - startX;
-        el.object3D.rotation.y = startRotY - dx * this.data.rotFactor;
+        pivot.object3D.rotation.y -= dx * this.data.rotFactor;
       } else if (e.touches.length === 2) {
-        const newDist = getDist(e.touches);
-        const scaleFactor = newDist / pinchStartDist;
-        let newScale = startScale * scaleFactor;
+        const pinchNow = getDist(e.touches);
+        const factor = pinchNow / pinchStart;
+        let newScale = startScale * factor;
         newScale = Math.min(this.data.maxScale, Math.max(this.data.minScale, newScale));
-        el.object3D.scale.set(newScale, newScale, newScale);
+        pivot.object3D.scale.set(newScale, newScale, newScale);
       }
       e.preventDefault();
     }, { passive: false });
   }
 });
+
 
 
 //------------------------------------------------------------------------------------------
