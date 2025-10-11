@@ -1,40 +1,96 @@
-// === CONTROL DE GESTOS SOBRE MODELO GPS ===
+// === CONTROL DE GESTOS SOBRE MODELO GPS (estable) ===
 AFRAME.registerComponent("gps-gesture", {
-  schema: { rotFactor: { default: 0.004 }, minScale: { default: 50 }, maxScale: { default: 1500 } },
+  schema: { rotFactor: { default: 0.35 }, minScale: { default: 50 }, maxScale: { default: 1500 } },
   init: function () {
-    const pivot = document.getElementById("pivot3d");
-    if (!pivot) return;
+    this.wrapper = this.el;                       // <a-entity id="wrapper3d">
+    this.pivot   = document.getElementById("pivot3d"); // el hijo libre
+    this.active  = false;
 
-    let startX = 0;
-    let startScale = pivot.object3D.scale.x;
-    let pinchStart = 0;
+    // Estado de gesto
+    this._touch1X = 0;
+    this._rotBase = 0;     // grados (no rad) para trabajar fácil con setAttribute
+    this._pinch0  = 0;
+    this._scale0  = 1;
 
-    const getDist = (t) => Math.hypot(t[0].pageX - t[1].pageX, t[0].pageY - t[1].pageY);
+    // Cache de valores actuales (para RAF)
+    this._rotY    = 0;     // grados
+    this._scale   = 300;   // tu escala inicial
 
-    window.addEventListener("touchstart", (e) => {
-      if (e.touches.length === 1) {
-        startX = e.touches[0].pageX;
-      } else if (e.touches.length === 2) {
-        pinchStart = getDist(e.touches);
-        startScale = pivot.object3D.scale.x;
-      }
-    });
+    // Inicializar desde atributos actuales del pivot
+    const rotAttr   = this.pivot.getAttribute("rotation") || {x:0,y:0,z:0};
+    const scaleAttr = this.pivot.getAttribute("scale")    || {x:300,y:300,z:300};
+    this._rotY  = rotAttr.y;
+    this._scale = scaleAttr.x;
 
-    window.addEventListener("touchmove", (e) => {
-      if (e.touches.length === 1) {
-        const dx = e.touches[0].pageX - startX;
-        pivot.object3D.rotation.y -= dx * this.data.rotFactor;
-      } else if (e.touches.length === 2) {
-        const pinchNow = getDist(e.touches);
-        const factor = pinchNow / pinchStart;
-        let newScale = startScale * factor;
-        newScale = Math.min(this.data.maxScale, Math.max(this.data.minScale, newScale));
-        pivot.object3D.scale.set(newScale, newScale, newScale);
-      }
-      e.preventDefault();
-    }, { passive: false });
+    // Listeners globales garantizados
+    window.addEventListener("touchstart", this._onStart, {passive:false});
+    window.addEventListener("touchmove",  this._onMove,  {passive:false});
+    window.addEventListener("touchend",   this._onEnd,   {passive:false});
+    window.addEventListener("touchcancel",this._onEnd,   {passive:false});
+
+    // bind this
+    this._tickApply = this._tickApply.bind(this);
+    this._onStart   = this._onStart.bind(this);
+    this._onMove    = this._onMove.bind(this);
+    this._onEnd     = this._onEnd.bind(this);
+
+    // Arranca el loop de aplicación (suave, sin pelearse con AR.js)
+    requestAnimationFrame(this._tickApply);
+  },
+
+  // Aplicamos rotation/scale por atributos (A-Frame), en RAF para no ser pisados
+  _tickApply: function () {
+    if (this.pivot) {
+      this.pivot.setAttribute("rotation", `0 ${this._rotY} 0`);
+      const s = Math.min(this.data.maxScale, Math.max(this.data.minScale, this._scale));
+      this.pivot.setAttribute("scale", `${s} ${s} ${s}`);
+    }
+    requestAnimationFrame(this._tickApply);
+  },
+
+  _onStart: function (e) {
+    if (!this.wrapper.getAttribute("visible")) return; // solo cuando está visible
+    if (e.touches.length === 1) {
+      this._touch1X = e.touches[0].pageX;
+      const r = this.pivot.getAttribute("rotation") || {y:0};
+      this._rotBase = r.y;
+      this.active = true;
+    } else if (e.touches.length === 2) {
+      this._pinch0 = this._dist(e.touches[0], e.touches[1]);
+      const sc = this.pivot.getAttribute("scale") || {x:300};
+      this._scale0 = sc.x;
+      this.active = true;
+    }
+    e.preventDefault();
+  },
+
+  _onMove: function (e) {
+    if (!this.active) return;
+    if (!this.wrapper.getAttribute("visible")) return;
+
+    if (e.touches.length === 1) {
+      const dx = e.touches[0].pageX - this._touch1X;
+      this._rotY = this._rotBase - dx * this.data.rotFactor; // grados
+    } else if (e.touches.length === 2) {
+      const d1 = this._dist(e.touches[0], e.touches[1]);
+      const factor = d1 / this._pinch0;
+      this._scale = this._scale0 * factor;
+    }
+    e.preventDefault();
+  },
+
+  _onEnd: function (e) {
+    this.active = false;
+    e.preventDefault();
+  },
+
+  _dist: function (a, b) {
+    const dx = a.pageX - b.pageX, dy = a.pageY - b.pageY;
+    return Math.hypot(dx, dy);
   }
 });
+// === FIN CONTROL DE GESTOS ===
+
 
 
 
