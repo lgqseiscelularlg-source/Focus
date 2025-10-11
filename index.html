@@ -23,7 +23,7 @@
     <div id="distancia-display">Distancia: -- m</div>
 
     <!-- Texto flotante para la version que se compila -->
-    <div id="version-label">Versión 7</div>
+    <div id="version-label">Versión 8</div>
 
 
     <!-- Escena AR principal -->
@@ -48,15 +48,17 @@
       position="0 2 0"
       visible="false"
     >
-      <!-- Hijo: aquí aplicamos rotación/zoom -->
-      <a-entity
-        id="objeto3d"
-        gltf-model="./models/goku.glb"
-        scale="300 300 300"
-        rotation="0 0 0"
-        gesture-controls
-      ></a-entity>
+      <!-- Nodo libre del ciclo AR.js -->
+      <a-entity id="pivot3d">
+        <a-entity
+          id="objeto3d"
+          gltf-model="./models/goku.glb"
+          scale="300 300 300"
+          rotation="0 0 0"
+        ></a-entity>
+      </a-entity>
     </a-entity>
+
 
     <a-camera
       gps-camera
