@@ -49,6 +49,55 @@ const anchor = document.getElementById("anchor");
 
 let modelClone = null; // el modelo 3D interactivo
 
+//-----------------------------------------------------------------------------
+
+// ====== GESTOS EN CAPA SUPERIOR (rotar con 1 dedo, zoom con 2) ======
+const gestureLayer = document.getElementById('gesture-layer');
+
+let currentModel = null;        // referencia al clon activo (se setea al crear)
+let startX = 0;
+let baseRotY = 0;               // en radianes
+let pinchStartDist = 0;
+let baseScale = 300;            // tu escala inicial
+const ROT_SENS = 0.005;         // sensibilidad rotación (sube/baja si quieres)
+const SCALE_MIN = 50;
+const SCALE_MAX = 1500;
+
+function distTouches(t0, t1) {
+  const dx = t0.pageX - t1.pageX;
+  const dy = t0.pageY - t1.pageY;
+  return Math.hypot(dx, dy);
+}
+
+gestureLayer.addEventListener('touchstart', (e) => {
+  if (!currentModel) return;
+  if (e.touches.length === 1) {
+    startX = e.touches[0].pageX;
+    baseRotY = currentModel.object3D.rotation.y;
+  } else if (e.touches.length === 2) {
+    pinchStartDist = distTouches(e.touches[0], e.touches[1]);
+    baseScale = currentModel.object3D.scale.x;
+  }
+  e.preventDefault();
+  e.stopPropagation();
+}, { passive: false });
+
+gestureLayer.addEventListener('touchmove', (e) => {
+  if (!currentModel) return;
+  if (e.touches.length === 1) {
+    const dx = e.touches[0].pageX - startX;
+    currentModel.object3D.rotation.y = baseRotY - dx * ROT_SENS; // rotar Y
+  } else if (e.touches.length === 2) {
+    const now = distTouches(e.touches[0], e.touches[1]);
+    let s = baseScale * (now / pinchStartDist);
+    s = Math.min(SCALE_MAX, Math.max(SCALE_MIN, s));
+    currentModel.object3D.scale.set(s, s, s);
+  }
+  e.preventDefault();
+  e.stopPropagation();
+}, { passive: false });
+
+//-----------------------------------------------------------------------------
 // Observa la ubicación
 navigator.geolocation.watchPosition(
   (pos) => {
@@ -82,24 +131,26 @@ navigator.geolocation.watchPosition(
 function crearModeloInteractivo(anchor) {
   const scene = document.querySelector("a-scene");
 
-  // Creamos el modelo libre (clon)
+  // Crear el clon (modelo libre, no GPS)
   const model = document.createElement("a-entity");
   model.setAttribute("gltf-model", "./models/goku.glb");
   model.setAttribute("scale", "300 300 300");
   model.setAttribute("rotation", "0 0 0");
-  model.setAttribute("gesture-controls", "rotFactor:0.35");
   scene.appendChild(model);
 
   // Posicionarlo donde está el anchor actualmente
   const anchorWorldPos = new THREE.Vector3();
+  anchor.object3D.updateMatrixWorld(true);
   anchor.object3D.getWorldPosition(anchorWorldPos);
 
   model.object3D.position.copy(anchorWorldPos);
-  model.object3D.position.y += 2; // 2 metros sobre el suelo
+  model.object3D.position.y += 2; // 2 m sobre el suelo
 
   modelClone = model;
+  currentModel = model;           // 👈 clave: los gestos actúan sobre este
   console.log("✅ Modelo 3D interactivo creado");
 }
+
 
 // Distancia Haversine
 function calcularDistancia(lat1, lon1, lat2, lon2) {
