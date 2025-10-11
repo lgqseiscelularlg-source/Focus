@@ -106,7 +106,6 @@ const radio = 15; // metros
 const target = { lat: -29.477051, lon: -66.889616 };
 const objeto = document.getElementById("geoBox");     // Cubo geolocalizado
 const objeto3d = document.getElementById("objeto3d"); // Modelo GLB
-objeto3d.setAttribute("visible", "true");
 const wrapper3d = document.getElementById("wrapper3d");// geolocalizado
 
 
