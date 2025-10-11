@@ -1,64 +1,40 @@
-// === GESTURE CONTROLS (funciona con AR.js geolocalizado) ===
-AFRAME.registerComponent("gesture-controls", {
-  schema: {
-    rotSensitivity: { default: 0.005 },
-    minScale: { default: 50 },
-    maxScale: { default: 1500 }
-  },
+// === GESTURES (AR.js compatible) ===
+AFRAME.registerComponent("gesture-arjs", {
+  schema: { rotFactor: { default: 0.004 }, minScale: { default: 50 }, maxScale: { default: 1500 } },
   init: function () {
     const el = this.el;
-    const scene = el.sceneEl;
-
-    let startX = 0;
-    let startScale = el.object3D.scale.x || 1;
-    let baseRotY = el.object3D.rotation.y || 0;
+    let startX = 0, startY = 0;
+    let startRotY = 0;
+    let startScale = el.object3D.scale.x;
     let pinchStartDist = 0;
 
-    const dist = (t0, t1) => {
-      const dx = t0.pageX - t1.pageX, dy = t0.pageY - t1.pageY;
-      return Math.hypot(dx, dy);
-    };
+    const getDist = (t) => Math.hypot(t[0].pageX - t[1].pageX, t[0].pageY - t[1].pageY);
 
-    const attach = () => {
-      const canvas = scene.renderer && scene.renderer.domElement;
-      if (!canvas) return;
+    window.addEventListener("touchstart", (e) => {
+      if (e.touches.length === 1) {
+        startX = e.touches[0].pageX;
+        startRotY = el.object3D.rotation.y;
+      } else if (e.touches.length === 2) {
+        pinchStartDist = getDist(e.touches);
+        startScale = el.object3D.scale.x;
+      }
+    }, { passive: false });
 
-      // Asegura que los gestos no vayan a la cámara ni al navegador
-      canvas.style.touchAction = "none";
-
-      canvas.addEventListener("touchstart", (e) => {
-        // Evitar que look-controls procese el drag
-        e.preventDefault(); e.stopPropagation();
-
-        if (e.touches.length === 1) {
-          startX = e.touches[0].pageX;
-          baseRotY = el.object3D.rotation.y;
-        } else if (e.touches.length === 2) {
-          pinchStartDist = dist(e.touches[0], e.touches[1]);
-          startScale = el.object3D.scale.x;
-        }
-      }, { passive: false });
-
-      canvas.addEventListener("touchmove", (e) => {
-        e.preventDefault(); e.stopPropagation();
-
-        if (e.touches.length === 1) {
-          const dx = e.touches[0].pageX - startX;
-          el.object3D.rotation.y = baseRotY - dx * this.data.rotSensitivity;
-        } else if (e.touches.length === 2) {
-          const factor = dist(e.touches[0], e.touches[1]) / pinchStartDist;
-          let s = startScale * factor;
-          s = Math.min(this.data.maxScale, Math.max(this.data.minScale, s));
-          el.object3D.scale.set(s, s, s);
-        }
-      }, { passive: false });
-    };
-
-    if (scene.renderer) attach();
-    else scene.addEventListener("render-target-loaded", attach, { once: true });
+    window.addEventListener("touchmove", (e) => {
+      if (e.touches.length === 1) {
+        const dx = e.touches[0].pageX - startX;
+        el.object3D.rotation.y = startRotY - dx * this.data.rotFactor;
+      } else if (e.touches.length === 2) {
+        const newDist = getDist(e.touches);
+        const scaleFactor = newDist / pinchStartDist;
+        let newScale = startScale * scaleFactor;
+        newScale = Math.min(this.data.maxScale, Math.max(this.data.minScale, newScale));
+        el.object3D.scale.set(newScale, newScale, newScale);
+      }
+      e.preventDefault();
+    }, { passive: false });
   }
 });
-// === FIN GESTURE CONTROLS ===
 
 
 //------------------------------------------------------------------------------------------
