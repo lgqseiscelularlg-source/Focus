@@ -23,7 +23,7 @@
     <div id="distancia-display">Distancia: -- m</div>
 
     <!-- Texto flotante para la version que se compila -->
-    <div id="version-label">Versión 8</div>
+    <div id="version-label">Versión 9</div>
 
 
     <!-- Escena AR principal -->
@@ -47,8 +47,8 @@
       gps-entity-place="latitude: -29.477051; longitude: -66.889616"
       position="0 2 0"
       visible="false"
+      gps-gesture
     >
-      <!-- Nodo libre del ciclo AR.js -->
       <a-entity id="pivot3d">
         <a-entity
           id="objeto3d"
@@ -58,6 +58,7 @@
         ></a-entity>
       </a-entity>
     </a-entity>
+
 
     <a-camera
       gps-camera
