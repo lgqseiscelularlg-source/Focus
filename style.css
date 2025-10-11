@@ -66,6 +66,15 @@ html, body, a-scene, canvas.a-canvas {
   overscroll-behavior: contain;
 }
 
+/* Capa transparente que captura los gestos y evita que lleguen a la cámara */
+#gesture-layer {
+  position: fixed;
+  inset: 0;
+  z-index: 999;         /* por encima del canvas y debajo de los labels si quieres */
+  background: transparent;
+  touch-action: none;   /* indispensable para que el navegador no haga zoom de página */
+}
+
 
 
 
