@@ -51,6 +51,30 @@
 
     </a-scene>
 
+     <!-- --------------------------------------- CONSOLA DE LOG EN PANTALLA CELULAR  -->
+          <div id="log-console"></div>
+      <script>
+        const logBox = document.getElementById('log-console');
+        logBox.style.position = 'fixed';
+        logBox.style.bottom = '0';
+        logBox.style.left = '0';
+        logBox.style.width = '100%';
+        logBox.style.maxHeight = '30vh';
+        logBox.style.overflowY = 'auto';
+        logBox.style.background = 'rgba(0,0,0,0.7)';
+        logBox.style.color = 'lime';
+        logBox.style.fontSize = '12px';
+        logBox.style.zIndex = '10000';
+      
+        const oldLog = console.log;
+        console.log = function (...args) {
+          oldLog.apply(console, args);
+          logBox.innerHTML += args.join(' ') + '<br>';
+        };
+      </script>
+
+     <!-- Fin del log -->
+
     <script src="script.js"></script>
   </body>
 </html>
